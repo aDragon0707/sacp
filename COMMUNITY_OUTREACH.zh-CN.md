@@ -42,6 +42,24 @@ No receipt, no trust.
 没有回执，就不该信任。
 ```
 
+## 采用案例帖模板
+
+```text
+SACP 现在有一份公开安全采用案例了。
+
+Longju 是一个本地单 Agent operator，它用 SACP 做 runtime guard：
+PreTask -> ContextCheck -> PreExternalAction -> PostTask
+
+公开安全 trial 覆盖：
+- 假完成 -> 412 missing_evidence
+- prompt injection -> 需要人类批准
+- skill distillation -> 只生成 candidate
+- duplicate handoff -> 204 no_action_needed
+
+案例：
+https://github.com/aDragon0707/sacp/blob/main/ADOPTION_CASE_LONGJU.zh-CN.md
+```
+
 ## 征集反馈模板
 
 ```text

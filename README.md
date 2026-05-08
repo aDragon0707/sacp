@@ -48,6 +48,10 @@ Validate protocol examples:
 python validator.py --examples --strict
 ```
 
+Read the public-safe adoption case:
+
+- [Longju SACP Runtime Guard](./ADOPTION_CASE_LONGJU.md)
+
 ## Test Your Own Agent Output
 
 Save any final agent response, worklog, or handoff as a text file:
@@ -85,7 +89,29 @@ Core docs:
 - [agentops-doctor-skill/](./agentops-doctor-skill): one-command reference tool
 - [examples/](./examples): valid and dirty packets
 - [sample-corpus/](./sample-corpus): messy outputs translated into SACP receipts
+- [ADOPTION_CASE_LONGJU.md](./ADOPTION_CASE_LONGJU.md): public-safe local adoption case
 - [COMMUNITY_OUTREACH.md](./COMMUNITY_OUTREACH.md): community sharing and feedback prompts
+
+## Real Adoption Case
+
+SACP/0.1 has been tested as a local state layer for Longju, a single-agent operator running in an OpenClaw-style workspace.
+
+The adoption used a file-based `.sacp/` ledger and a runtime guard with four gates:
+
+```text
+PreTask -> ContextCheck -> PreExternalAction -> PostTask
+```
+
+The public-safe trials covered false completion, prompt injection, skill distillation, and duplicate handoffs:
+
+```text
+false completion      -> 412 missing_evidence
+prompt injection      -> human approval required
+skill distillation    -> candidate only, no automatic promotion
+duplicate handoff     -> 204 no_action_needed
+```
+
+Read the case study: [ADOPTION_CASE_LONGJU.md](./ADOPTION_CASE_LONGJU.md)
 
 ## Concrete Example
 

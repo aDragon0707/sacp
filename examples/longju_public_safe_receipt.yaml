@@ -1,0 +1,27 @@
+protocol: SACP/0.1
+type: receipt
+method: COMPLETE
+status_code: 200
+handoff_id: hf_public_safe_core_trials
+attempt_id: attempt_001
+agent_id: Longju
+claims:
+  - text: "The false-completion trial returned 412 missing_evidence."
+    claim_type: tool_result
+    source_id: ev_public_safe_core_trials
+    support_status: supported
+  - text: "The duplicate-handoff trial returned 204 no_action_needed."
+    claim_type: tool_result
+    source_id: ev_public_safe_core_trials
+    support_status: supported
+  - text: "The runtime guard improved state recovery and completion discipline in this local setup."
+    claim_type: inference
+    source_id: ev_public_safe_core_trials
+    support_status: supported
+verification:
+  status: passed
+  method: "public-safe local trial review"
+  evidence_id: ev_public_safe_core_trials
+residual_risk: "This adoption case reports one local setup; it does not prove universal agent safety."
+next_owner: Human
+human_decision_required: false

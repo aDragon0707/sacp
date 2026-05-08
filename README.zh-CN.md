@@ -42,6 +42,10 @@ python agentops-doctor-skill/agentops_doctor.py agentops-doctor-skill/examples/u
 python validator.py --examples --strict
 ```
 
+阅读公开安全采用案例：
+
+- [Longju SACP Runtime Guard](./ADOPTION_CASE_LONGJU.zh-CN.md)
+
 ## 用你自己的 agent 输出测试
 
 把任意 agent 的最终回复、worklog 或 handoff 保存成一个文本文件：
@@ -79,7 +83,29 @@ validator.py = 本地参考检查器
 - [agentops-doctor-skill/](./agentops-doctor-skill)：一条命令可运行的参考工具
 - [examples/](./examples)：合法和脏样例
 - [sample-corpus/](./sample-corpus)：messy output 到 SACP receipt 的样本集
+- [ADOPTION_CASE_LONGJU.zh-CN.md](./ADOPTION_CASE_LONGJU.zh-CN.md)：公开安全的本地采用案例
 - [COMMUNITY_OUTREACH.zh-CN.md](./COMMUNITY_OUTREACH.zh-CN.md)：社区传播和征集反馈文案
+
+## 真实采用案例
+
+SACP/0.1 已经在 Longju 这个本地单 Agent operator 里作为状态层试运行过。
+
+这次接入使用本地 `.sacp/` 文件账本，并用 runtime guard 包住四个 gate：
+
+```text
+PreTask -> ContextCheck -> PreExternalAction -> PostTask
+```
+
+公开安全 trial 覆盖了假完成、prompt injection、skill distillation 和重复 handoff：
+
+```text
+false completion      -> 412 missing_evidence
+prompt injection      -> 需要人类批准
+skill distillation    -> 只生成 candidate，不自动 promote
+duplicate handoff     -> 204 no_action_needed
+```
+
+阅读案例：[ADOPTION_CASE_LONGJU.zh-CN.md](./ADOPTION_CASE_LONGJU.zh-CN.md)
 
 ## 一个真实例子
 

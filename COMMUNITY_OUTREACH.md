@@ -41,6 +41,24 @@ python agentops-doctor-skill/agentops_doctor.py agentops-doctor-skill/examples/u
 No receipt, no trust.
 ```
 
+## Adoption Case Post
+
+```text
+SACP now has a public-safe adoption case.
+
+Longju, a local single-agent operator, uses SACP as a runtime guard:
+PreTask -> ContextCheck -> PreExternalAction -> PostTask
+
+The trials covered:
+- false completion -> 412 missing_evidence
+- prompt injection -> human approval required
+- skill distillation -> candidate only
+- duplicate handoff -> 204 no_action_needed
+
+Case study:
+https://github.com/aDragon0707/sacp/blob/main/ADOPTION_CASE_LONGJU.md
+```
+
 ## Ask For Feedback
 
 ```text
