@@ -1,0 +1,28 @@
+protocol: SACP/0.1
+type: receipt
+method: COMPLETE
+status_code: 200
+handoff_id: hf_check_claims_001
+attempt_id: attempt_001
+agent_id: AI-04
+processed_at: 2026-05-07T20:42:00+08:00
+source_fingerprint: sha256:abc123
+claims:
+  - text: "The draft contains two over-strong public claims."
+    claim_type: inference
+    source_id: public_draft_v1
+    support_status: supported
+  - text: "Publication approval has not been granted."
+    claim_type: user_statement
+    source_id: founder_message_2026-05-07
+    support_status: supported
+verification:
+  status: passed
+  method: "claim boundary review"
+  evidence_id: review_notes_001
+residual_risk: "No founder publish approval yet."
+next_owner: Human
+human_decision_required: true
+extensions:
+  sacp.experimental.profile: sacp-evidence
+

@@ -1,0 +1,22 @@
+protocol: SACP/0.1
+type: handoff
+method: RETRY
+resource_type: handoff
+resource_id: hf_cross_model_claim_review_001
+handoff_id: hf_cross_model_claim_review_001
+attempt_id: attempt_002
+agent_id: deepseek-chat
+created_at: 2026-05-07T22:20:00+08:00
+source_fingerprint: sha256:claim-review-source-v1
+content_type: text/markdown
+reply_to: receipt_attempt_001_openai
+extensions:
+  vendor.openai.previous_trace_id: trace_openai_attempt_001
+  vendor.deepseek.model_alias: deepseek-chat
+  sacp.experimental.cross_model: true
+body: |
+  Continue the claim-boundary review from the previous receipt.
+  Preserve the same handoff_id because this is the same work request.
+  Use a new attempt_id because a different model is retrying the work.
+  Do not treat prior model inference as retrieved_fact.
+

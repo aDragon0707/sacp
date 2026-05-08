@@ -1,0 +1,26 @@
+protocol: SACP/0.1
+type: receipt
+method: BLOCK
+status_code: 412
+handoff_id: corpus_003_solo_sacp_dirty_run_experiment
+attempt_id: attempt_001
+agent_id: corpus_translator
+processed_at: 2026-05-07T23:52:00+08:00
+source_fingerprint: sha256:corpus-003-selected-excerpt
+claims:
+  - text: "The raw file is an experiment note, not the SACP specification."
+    claim_type: user_statement
+    source_id: raw-runs/003_solo_sacp_dirty_run_experiment.md
+    support_status: supported
+  - text: "The raw file's fields should not be treated as permanent until reviewed."
+    claim_type: user_statement
+    source_id: raw-runs/003_solo_sacp_dirty_run_experiment.md
+    support_status: supported
+verification:
+  status: blocked
+  method: "spec-promotion boundary review"
+  evidence_id: raw-runs/003_solo_sacp_dirty_run_experiment.md
+residual_risk: "The sample can inform SACP but should not be promoted into core protocol without separate governance review."
+next_owner: ProtocolMaintainer
+human_decision_required: false
+

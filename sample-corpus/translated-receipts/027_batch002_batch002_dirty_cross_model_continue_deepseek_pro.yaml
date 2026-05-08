@@ -1,0 +1,21 @@
+protocol: SACP/0.1
+type: receipt
+method: FAIL
+status_code: 500
+handoff_id: corpus_027_batch002_batch002_dirty_cross_model_continue_deepseek_pro
+attempt_id: attempt_001
+agent_id: corpus_translator
+processed_at: 2026-05-08T00:27:00+08:00
+source_fingerprint: sha256:batch002-027
+claims:
+  - text: "Model returned an empty output for cross-model continuation."
+    claim_type: inference
+    source_id: raw-runs/027_batch002_dirty_cross_model_continue_deepseek_pro.md
+    support_status: unsupported
+verification:
+  status: failed
+  method: "manual Batch 002 dirty-output translation"
+  evidence_id: raw-runs/027_batch002_dirty_cross_model_continue_deepseek_pro.md
+residual_risk: "Raw output was generated without SACP instructions; diagnosis is based on selected model output and not external fact verification."
+next_owner: Coordinator
+human_decision_required: false

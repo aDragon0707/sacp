@@ -1,0 +1,24 @@
+case_id: dirty_duplicate_handoff
+description: "Same handoff_id and same source_fingerprint were already completed."
+incoming_packet:
+  protocol: SACP/0.1
+  type: handoff
+  method: CLAIM
+  resource_type: handoff
+  resource_id: hf_check_claims_001
+  handoff_id: hf_check_claims_001
+  attempt_id: attempt_002
+  agent_id: AI-02
+  created_at: 2026-05-07T21:10:00+08:00
+  source_fingerprint: sha256:abc123
+  content_type: text/markdown
+known_receipt:
+  handoff_id: hf_check_claims_001
+  attempt_id: attempt_001
+  status_code: 200
+expected_result:
+  status_code: 409
+  status_text: duplicate_handoff
+  verdict: no_new_work
+  required_fix: "Return or link the existing receipt. Do not redo the work."
+

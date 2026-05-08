@@ -1,0 +1,232 @@
+{
+  "protocol": "SACP/0.1",
+  "type": "multi_model_dirty_run_report",
+  "tested_at": "2026-05-07T23:13:25+0800",
+  "total_cases": 3,
+  "models": [
+    {
+      "name": "deepseek_pro",
+      "model": "deepseek-v4-pro",
+      "endpoint_host": "api.deepseek.com",
+      "env_key": "DEEPSEEK_API_KEY",
+      "skipped": false,
+      "case_results": [
+        {
+          "case_id": "duplicate_handoff",
+          "expected_status": 409,
+          "actual_status": 409,
+          "pass": true,
+          "response_ok": true,
+          "http_status": 200,
+          "finish_reason": "stop",
+          "total_tokens": 1496,
+          "elapsed_sec": 22.667,
+          "status_text": "duplicate_handoff",
+          "verdict": "rejected",
+          "required_fix": "Return or link the existing receipt. Do not redo the work.",
+          "excerpt": "```yaml\nstatus_code: 409\nstatus_text: duplicate_handoff\nverdict: rejected\nreceipt_completeness: already_completed\nclaim_findings: []\nmemory_warning: none\nnext_owner: as_in_existing_receipt\nhuman_decision_required: false\nrequired_fix: \"Return or link the existing receipt. Do not redo the work.\"\n```\n\n**解释**：传入的握手指令 handoff_id `hf_check_claims_001` 与已知已完成的回执（attempt_001，状态码200）相同，且源指纹一致。根据 SACP/0.1，重复提交已完成的工作必须返回 409 并拒绝执行。代理不应重新处理，而应返回已有回执。"
+        },
+        {
+          "case_id": "missing_evidence",
+          "expected_status": 412,
+          "actual_status": 412,
+          "pass": true,
+          "response_ok": true,
+          "http_status": 200,
+          "finish_reason": "length",
+          "total_tokens": 1655,
+          "elapsed_sec": 28.351,
+          "status_text": null,
+          "verdict": null,
+          "required_fix": null,
+          "excerpt": "```yaml\nstatus_code: 412\nstatus_text: missing_evidence\nverdict: receipt is invalid due to lack of evidence for a retrieved_fact claim marked supported.\nreceipt_completeness: incomplete\nclaim_findings:\n  - claim_text: \"SACP guarantees correct agent work.\"\n    claim_type: retrieved_fact\n    source_id: none\n    support_status: supported\n    finding: Source missing; support_status cannot be \"supported\" without evidence. Self-review is not evidence.\nmemory_warning: Do not promote this unverified clai"
+        },
+        {
+          "case_id": "memory_candidate_auto_promoted",
+          "expected_status": 412,
+          "actual_status": 412,
+          "pass": true,
+          "response_ok": true,
+          "http_status": 200,
+          "finish_reason": "stop",
+          "total_tokens": 1523,
+          "elapsed_sec": 24.181,
+          "status_text": null,
+          "verdict": null,
+          "required_fix": null,
+          "excerpt": "status_code: 412\nstatus_text: missing_evidence\nverdict: Handoff rejected; auto-promotion of pending memory is not auditable under SACP/0.1.\nreceipt_completeness: N/A (no valid receipt possible for this handoff)\nclaim_findings:\n  - No approved evidence or human_approval_id present\n  - PROMOTE method attempts to change state without supporting verification\nmemory_warning: \"Pending memory (mem_strategy_001) cannot be auto-promoted. Evidence of human approval or verified fact chain required.\"\nnext_o"
+        }
+      ],
+      "passed": 3,
+      "failed": 0
+    },
+    {
+      "name": "qwen_strong",
+      "model": "qwen3.6-plus",
+      "endpoint_host": "dashscope.aliyuncs.com",
+      "env_key": "QWEN_API_KEY",
+      "skipped": false,
+      "case_results": [
+        {
+          "case_id": "duplicate_handoff",
+          "expected_status": 409,
+          "actual_status": 409,
+          "pass": true,
+          "response_ok": true,
+          "http_status": 200,
+          "finish_reason": "stop",
+          "total_tokens": 2657,
+          "elapsed_sec": 34.189,
+          "status_text": "duplicate_handoff",
+          "verdict": "REJECTED",
+          "required_fix": "Return or link the existing receipt. Do not redo the work.",
+          "excerpt": "```yaml\nstatus_code: 409\nstatus_text: duplicate_handoff\nverdict: REJECTED\nreceipt_completeness: Prior receipt exists (status 200, attempt_001)\nclaim_findings: Claims ignored; duplicate work detected against completed handoff.\nmemory_warning: None\nnext_owner: AI-02\nhuman_decision_required: false\nrequired_fix: \"Return or link the existing receipt. Do not redo the work.\"\n```\n\n**诊断说明（中文）：**\n该工单触发 `duplicate_handoff` 失败模式。系统已存在相同 `handoff_id` 且状态为 `200 completed` 的有效历史回执（attempt_001）。根据 SACP/0.1 协议，重"
+        },
+        {
+          "case_id": "missing_evidence",
+          "expected_status": 412,
+          "actual_status": 412,
+          "pass": true,
+          "response_ok": true,
+          "http_status": 200,
+          "finish_reason": "stop",
+          "total_tokens": 3271,
+          "elapsed_sec": 46.069,
+          "status_text": "missing_evidence",
+          "verdict": "REJECTED",
+          "required_fix": "Provide a trusted source or downgrade claim_type/support_status.",
+          "excerpt": "```yaml\nstatus_code: 412\nstatus_text: missing_evidence\nverdict: REJECTED\nreceipt_completeness: structurally_complete_evidentially_invalid\nclaim_findings: \"retrieved_fact claim marked 'supported' has source_id: 'none', violating evidence requirement\"\nmemory_warning: none\nnext_owner: Human\nhuman_decision_required: true\nrequired_fix: \"Provide a trusted source or downgrade claim_type/support_status.\"\n```\n\n该工单违反 SACP/0.1 核心审计规则。声明被标记为 `retrieved_fact` 且支持状态为 `supported`，但 `source_id` 为 `none`，属于典型“缺失"
+        },
+        {
+          "case_id": "memory_candidate_auto_promoted",
+          "expected_status": 412,
+          "actual_status": 412,
+          "pass": true,
+          "response_ok": true,
+          "http_status": 200,
+          "finish_reason": "stop",
+          "total_tokens": 3136,
+          "elapsed_sec": 43.164,
+          "status_text": "missing_evidence",
+          "verdict": "REJECTED",
+          "required_fix": "Keep memory pending and provide approval evidence before PROMOTE.",
+          "excerpt": "```yaml\nstatus_code: 412\nstatus_text: missing_evidence\nverdict: REJECTED\nreceipt_completeness: missing\nclaim_findings: \"Implicit promotion claim lacks verification evidence and human_approval_id.\"\nmemory_warning: \"memory candidate auto-promoted\"\nnext_owner: human_reviewer\nhuman_decision_required: true\nrequired_fix: \"Keep memory pending and provide approval evidence before PROMOTE.\"\n```\n\n该数据包触发“内存候选自动提升”故障模式。依据 SACP/0.1 “无凭证不信任”核心原则，`human_approval_id` 为 null 且无有效验证回执，严禁自动将 `pending_verification`"
+        }
+      ],
+      "passed": 3,
+      "failed": 0
+    },
+    {
+      "name": "glm_strong",
+      "model": "glm-4.7",
+      "endpoint_host": "open.bigmodel.cn",
+      "env_key": "ZHIPU_API_KEY",
+      "skipped": false,
+      "case_results": [
+        {
+          "case_id": "duplicate_handoff",
+          "expected_status": 409,
+          "actual_status": 409,
+          "pass": true,
+          "response_ok": true,
+          "http_status": 200,
+          "finish_reason": "length",
+          "total_tokens": 1846,
+          "elapsed_sec": 26.284,
+          "status_text": "duplicate_handoff",
+          "verdict": "REJECT",
+          "required_fix": "Return or link the existing receipt. Do not redo the work.",
+          "excerpt": "```yaml\nstatus_code: 409\nstatus_text: duplicate_handoff\nverdict: REJECT\nreceipt_completeness: N/A\nclaim_findings: N/A\nmemory_warning: false\nnext_owner: N/A\nhuman_decision_required: false\nrequired_fix: Return or link the existing receipt. Do not redo the work.\n```\n\n诊断说明：\n传入的数据包与已知收据中的 `handoff_id` 和 `source_fingerprint` 完全一致，且已知收据显示状态为 `200`（已完成）。根据 SACP/0"
+        },
+        {
+          "case_id": "missing_evidence",
+          "expected_status": 412,
+          "actual_status": null,
+          "pass": false,
+          "response_ok": true,
+          "http_status": 200,
+          "finish_reason": "length",
+          "total_tokens": 1820,
+          "elapsed_sec": 25.804,
+          "status_text": null,
+          "verdict": null,
+          "required_fix": null,
+          "excerpt": null
+        },
+        {
+          "case_id": "memory_candidate_auto_promoted",
+          "expected_status": 412,
+          "actual_status": null,
+          "pass": false,
+          "response_ok": false,
+          "http_status": 429,
+          "finish_reason": null,
+          "total_tokens": null,
+          "elapsed_sec": 0.366,
+          "status_text": null,
+          "verdict": null,
+          "required_fix": null,
+          "excerpt": "{\"error\":{\"code\":\"1302\",\"message\":\"您的账户已达到速率限制，请您控制请求频率\"}}"
+        }
+      ],
+      "passed": 1,
+      "failed": 2
+    },
+    {
+      "name": "kimi_strong",
+      "model": "kimi-k2.6",
+      "endpoint_host": "api.moonshot.cn",
+      "env_key": "KIMI_API_KEY",
+      "skipped": false,
+      "case_results": [
+        {
+          "case_id": "duplicate_handoff",
+          "expected_status": 409,
+          "actual_status": null,
+          "pass": false,
+          "response_ok": true,
+          "http_status": 200,
+          "finish_reason": "length",
+          "total_tokens": 1646,
+          "elapsed_sec": 55.301,
+          "status_text": null,
+          "verdict": null,
+          "required_fix": null,
+          "excerpt": null
+        },
+        {
+          "case_id": "missing_evidence",
+          "expected_status": 412,
+          "actual_status": null,
+          "pass": false,
+          "response_ok": false,
+          "http_status": 429,
+          "finish_reason": null,
+          "total_tokens": null,
+          "elapsed_sec": 0.153,
+          "status_text": null,
+          "verdict": null,
+          "required_fix": null,
+          "excerpt": "{\"error\":{\"message\":\"Your account org-a2deddaeecef47409acc4befe05d13c5\\u003cak-f9jk7ugf3um111atmp3i\\u003e request reached max organization concurrency: 3, please try again after 1 seconds\",\"type\":\"rate_limit_reached_error\"}}"
+        },
+        {
+          "case_id": "memory_candidate_auto_promoted",
+          "expected_status": 412,
+          "actual_status": null,
+          "pass": false,
+          "response_ok": true,
+          "http_status": 200,
+          "finish_reason": "length",
+          "total_tokens": 1635,
+          "elapsed_sec": 55.732,
+          "status_text": null,
+          "verdict": null,
+          "required_fix": null,
+          "excerpt": null
+        }
+      ],
+      "passed": 0,
+      "failed": 3
+    }
+  ]
+}

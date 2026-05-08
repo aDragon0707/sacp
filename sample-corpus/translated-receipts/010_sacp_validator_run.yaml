@@ -1,0 +1,22 @@
+protocol: SACP/0.1
+type: receipt
+method: COMPLETE
+status_code: 200
+handoff_id: corpus_010_sacp_validator_run
+attempt_id: attempt_001
+agent_id: corpus_translator
+processed_at: 2026-05-07T23:59:00+08:00
+source_fingerprint: sha256:corpus-010-selected-excerpt
+claims:
+  - text: "The local validator strict run passed all listed examples."
+    claim_type: tool_result
+    source_id: raw-runs/010_sacp_validator_run.md
+    support_status: supported
+verification:
+  status: passed
+  method: "local validator output translation"
+  evidence_id: raw-runs/010_sacp_validator_run.md
+residual_risk: "The selected excerpt records command output; rerun validator for current state before release."
+next_owner: ProtocolMaintainer
+human_decision_required: false
+

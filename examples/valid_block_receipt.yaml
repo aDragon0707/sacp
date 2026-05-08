@@ -1,0 +1,23 @@
+protocol: SACP/0.1
+type: receipt
+method: BLOCK
+status_code: 412
+handoff_id: hf_promote_memory_001
+attempt_id: attempt_001
+agent_id: AI-04
+processed_at: 2026-05-07T21:24:00+08:00
+source_fingerprint: sha256:def456
+claims:
+  - text: "The memory promotion request lacks human or trusted-system approval evidence."
+    claim_type: inference
+    source_id: hf_promote_memory_001
+    support_status: supported
+verification:
+  status: failed
+  method: "memory promotion boundary review"
+  evidence_id: missing_human_approval_id
+residual_risk: "The memory item must remain pending_verification until approval exists."
+next_owner: Human
+human_decision_required: true
+extensions:
+  profile.memory.review_state: pending_verification

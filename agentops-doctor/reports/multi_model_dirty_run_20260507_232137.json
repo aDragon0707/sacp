@@ -1,0 +1,64 @@
+{
+  "protocol": "SACP/0.1",
+  "type": "multi_model_dirty_run_report",
+  "tested_at": "2026-05-07T23:20:47+0800",
+  "total_cases": 3,
+  "models": [
+    {
+      "name": "kimi_strong",
+      "model": "kimi-k2.6",
+      "endpoint_host": "api.moonshot.cn",
+      "env_key": "KIMI_API_KEY",
+      "skipped": false,
+      "case_results": [
+        {
+          "case_id": "duplicate_handoff",
+          "expected_status": 409,
+          "actual_status": 409,
+          "pass": true,
+          "response_ok": true,
+          "http_status": 200,
+          "finish_reason": "stop",
+          "total_tokens": 1000,
+          "elapsed_sec": 21.14,
+          "status_text": "duplicate_handoff",
+          "verdict": "REJECTED",
+          "required_fix": "Return or link the existing receipt. Do not redo the work.",
+          "excerpt": "```yaml\nstatus_code: 409\nstatus_text: duplicate_handoff\nverdict: REJECTED\nreceipt_completeness: N/A - incoming packet rejected before receipt generation\nclaim_findings: []\nmemory_warning: none\nnext_owner: null\nhuman_decision_required: false\nrequired_fix: \"Return or link the existing receipt. Do not redo the work.\"\n```\n\n**诊断说明：**\n\n这是一个明确的**重复移交（duplicate handoff）**案例。\n\n核心判定依据：\n- `handoff_id: hf_check_claims_001` 与已知已完成的收据完全重复\n- `source_fingerprint: sha256:abc123` 未变更，确认是同一来源内容的重复提交\n- 已知收据 `status"
+        },
+        {
+          "case_id": "missing_evidence",
+          "expected_status": 412,
+          "actual_status": 412,
+          "pass": true,
+          "response_ok": true,
+          "http_status": 200,
+          "finish_reason": "stop",
+          "total_tokens": 1058,
+          "elapsed_sec": 28.64,
+          "status_text": null,
+          "verdict": null,
+          "required_fix": null,
+          "excerpt": "```yaml\nstatus_code: 412\nstatus_text: missing_evidence\nverdict: invalid_receipt\nreceipt_completeness: structurally_complete\nclaim_findings:\n  - claim_index: 0\n    claim_text: \"SACP guarantees correct agent work.\"\n    claim_type_declared: retrieved_fact\n    issue: retrieved_fact_without_source\n    source_id: none\n    support_status: supported\n    actual_basis: unsupported_inferred_assertion\n    rule_violation: \"retrieved_fact requires verifiable source; 'none' is not a valid source\"\n    correct_c"
+        },
+        {
+          "case_id": "memory_candidate_auto_promoted",
+          "expected_status": 412,
+          "actual_status": 400,
+          "pass": false,
+          "response_ok": true,
+          "http_status": 200,
+          "finish_reason": "stop",
+          "total_tokens": 1067,
+          "elapsed_sec": 28.211,
+          "status_text": "invalid_packet",
+          "verdict": "REJECTED",
+          "required_fix": "Method PROMOTE is not defined in SACP/0.1 for memory state transitions. Memory promotion requires human_decision_required=true with human_approval_id present. Packet must be rejected; agent must emit valid handoff with method CLAIM or REPORT, include evidence, and await human receipt with status 301 or 200 before any state change.",
+          "excerpt": "```yaml\nstatus_code: 400\nstatus_text: invalid_packet\nverdict: REJECTED\nreceipt_completeness: absent\nclaim_findings:\n  - claim_type: user_statement\n    support_status: not_applicable\n    note: \"No claims present; no receipt generated.\"\nmemory_warning: critical_auto_promotion_detected\nnext_owner: null\nhuman_decision_required: true\nrequired_fix: \"Method PROMOTE is not defined in SACP/0.1 for memory state transitions. Memory promotion requires human_decision_required=true with human_approval_id pres"
+        }
+      ],
+      "passed": 2,
+      "failed": 1
+    }
+  ]
+}

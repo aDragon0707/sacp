@@ -1,0 +1,30 @@
+protocol: SACP/0.1
+type: receipt
+method: COMPLETE
+status_code: 200
+handoff_id: corpus_005_socrates_next_gpt_handoff
+attempt_id: attempt_001
+agent_id: corpus_translator
+processed_at: 2026-05-07T23:54:00+08:00
+source_fingerprint: sha256:corpus-005-selected-excerpt
+claims:
+  - text: "The handoff warns not to print local .env secrets."
+    claim_type: user_statement
+    source_id: raw-runs/005_socrates_next_gpt_handoff.md
+    support_status: supported
+  - text: "The handoff says T-002V, T-003, and T-011B were completed in recent sessions."
+    claim_type: user_statement
+    source_id: raw-runs/005_socrates_next_gpt_handoff.md
+    support_status: supported
+  - text: "The handoff says sparse or dirty vector index data is a known issue."
+    claim_type: user_statement
+    source_id: raw-runs/005_socrates_next_gpt_handoff.md
+    support_status: supported
+verification:
+  status: passed
+  method: "manual SACP receipt translation from selected handoff excerpt"
+  evidence_id: raw-runs/005_socrates_next_gpt_handoff.md
+residual_risk: "Completion claims are preserved as handoff statements, not independently rerun."
+next_owner: NextAgent
+human_decision_required: false
+

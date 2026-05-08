@@ -1,0 +1,232 @@
+{
+  "protocol": "SACP/0.1",
+  "type": "multi_model_dirty_run_report",
+  "tested_at": "2026-05-07T23:17:18+0800",
+  "total_cases": 3,
+  "models": [
+    {
+      "name": "deepseek_pro",
+      "model": "deepseek-v4-pro",
+      "endpoint_host": "api.deepseek.com",
+      "env_key": "DEEPSEEK_API_KEY",
+      "skipped": false,
+      "case_results": [
+        {
+          "case_id": "duplicate_handoff",
+          "expected_status": 409,
+          "actual_status": 409,
+          "pass": true,
+          "response_ok": true,
+          "http_status": 200,
+          "finish_reason": "stop",
+          "total_tokens": 1320,
+          "elapsed_sec": 17.194,
+          "status_text": "duplicate_handoff",
+          "verdict": "The same handoff_id and source_fingerprint were already completed (receipt status 200). This is a duplicate attempt.",
+          "required_fix": "Return or link the existing receipt. Do not redo the work.",
+          "excerpt": "```yaml\nstatus_code: 409\nstatus_text: duplicate_handoff\nverdict: The same handoff_id and source_fingerprint were already completed (receipt status 200). This is a duplicate attempt.\nreceipt_completeness: The known receipt for attempt_001 is complete (200).\nclaim_findings: Not applicable – no new claims should be processed.\nmemory_warning: No memory promotion allowed; existing receipt already captured the outcome.\nnext_owner: None – work was already finished.\nhuman_decision_required: false\nrequir"
+        },
+        {
+          "case_id": "missing_evidence",
+          "expected_status": 412,
+          "actual_status": 412,
+          "pass": true,
+          "response_ok": true,
+          "http_status": 200,
+          "finish_reason": "stop",
+          "total_tokens": 1546,
+          "elapsed_sec": 24.729,
+          "status_text": "missing_evidence",
+          "verdict": "invalid_claim",
+          "required_fix": "Provide a trusted source for the claim, or downgrade claim_type to inference/user_statement and adjust support_status to unsupported/unverified.",
+          "excerpt": "```yaml\nstatus_code: 412\nstatus_text: missing_evidence\nverdict: invalid_claim\nreceipt_completeness: complete\nclaim_findings:\n  - claim_text: \"SACP guarantees correct agent work.\"\n    issue: \"claim_type 'retrieved_fact' with source_id 'none' and support_status 'supported' is unsupported; missing evidence\"\nmemory_warning: none\nnext_owner: Human\nhuman_decision_required: true\nrequired_fix: \"Provide a trusted source for the claim, or downgrade claim_type to inference/user_statement and adjust support"
+        },
+        {
+          "case_id": "memory_candidate_auto_promoted",
+          "expected_status": 412,
+          "actual_status": 412,
+          "pass": true,
+          "response_ok": true,
+          "http_status": 200,
+          "finish_reason": "length",
+          "total_tokens": 1669,
+          "elapsed_sec": 27.697,
+          "status_text": "missing_evidence",
+          "verdict": "action_denied_missing_evidence",
+          "required_fix": "Keep memory pending and provide approval evidence before PROMOTE.",
+          "excerpt": "```yaml\nstatus_code: 412\nstatus_text: missing_evidence\nverdict: action_denied_missing_evidence\nreceipt_completeness: no_receipt\nclaim_findings:\n  - type: inference\n    description: Agent attempts to promote memory without supporting evidence (human_approval_id is null).\n    support_status: unsupported\nmemory_warning: \"Auto-promotion of memory without human approval or verified evidence is not allowed. Keep memory as pending_verification.\"\nnext_owner: human_approver\nhuman_decision_required: true\n"
+        }
+      ],
+      "passed": 3,
+      "failed": 0
+    },
+    {
+      "name": "qwen_strong",
+      "model": "qwen3.6-plus",
+      "endpoint_host": "dashscope.aliyuncs.com",
+      "env_key": "QWEN_API_KEY",
+      "skipped": false,
+      "case_results": [
+        {
+          "case_id": "duplicate_handoff",
+          "expected_status": 409,
+          "actual_status": 409,
+          "pass": true,
+          "response_ok": true,
+          "http_status": 200,
+          "finish_reason": "stop",
+          "total_tokens": 2766,
+          "elapsed_sec": 35.375,
+          "status_text": "duplicate_handoff",
+          "verdict": "REJECTED",
+          "required_fix": "Return or link the existing receipt. Do not redo the work.",
+          "excerpt": "```yaml\nstatus_code: 409\nstatus_text: duplicate_handoff\nverdict: REJECTED\nreceipt_completeness: prior_receipt_valid\nclaim_findings: none_evaluated\nmemory_warning: none\nnext_owner: AI-02\nhuman_decision_required: false\nrequired_fix: \"Return or link the existing receipt. Do not redo the work.\"\n```\n\n该工单因 `handoff_id` 与 `source_fingerprint` 已存在且状态为 `200 completed` 的有效回执，触发 `409 duplicate_handoff`。根据 SACP/0.1 协议，重复提交相同指纹的工单将被直接拒绝，代理不得重新执行或覆盖已完成的工作。系统应直接返回或链接现有回执，无需人工介入。诊断结果与预期完全一致。"
+        },
+        {
+          "case_id": "missing_evidence",
+          "expected_status": 412,
+          "actual_status": 412,
+          "pass": true,
+          "response_ok": true,
+          "http_status": 200,
+          "finish_reason": "stop",
+          "total_tokens": 3231,
+          "elapsed_sec": 44.303,
+          "status_text": "missing_evidence",
+          "verdict": "AUDIT_FAILED",
+          "required_fix": "Attach a verifiable source_id or downgrade claim_type to inference/user_statement and support_status to unverified/unsupported.",
+          "excerpt": "```yaml\nstatus_code: 412\nstatus_text: missing_evidence\nverdict: AUDIT_FAILED\nreceipt_completeness: structurally_valid_evidentially_deficient\nclaim_findings:\n  - \"Claim 'SACP guarantees correct agent work.' is marked retrieved_fact/supported but source_id is 'none'. Missing verifiable evidence.\"\nmemory_warning: \"Do not auto-promote unverified/unsupported claims to memory.\"\nnext_owner: Human\nhuman_decision_required: true\nrequired_fix: \"Attach a verifiable source_id or downgrade claim_type to infer"
+        },
+        {
+          "case_id": "memory_candidate_auto_promoted",
+          "expected_status": 412,
+          "actual_status": 412,
+          "pass": true,
+          "response_ok": true,
+          "http_status": 200,
+          "finish_reason": "stop",
+          "total_tokens": 3089,
+          "elapsed_sec": 41.437,
+          "status_text": "missing_evidence",
+          "verdict": "FAIL",
+          "required_fix": "Keep memory pending and provide approval evidence before PROMOTE.",
+          "excerpt": "```yaml\nstatus_code: 412\nstatus_text: missing_evidence\nverdict: FAIL\nreceipt_completeness: missing\nclaim_findings: unsupported\nmemory_warning: memory candidate auto-promoted\nnext_owner: human_reviewer\nhuman_decision_required: true\nrequired_fix: \"Keep memory pending and provide approval evidence before PROMOTE.\"\n```\n\n该数据包触发“内存候选自动提升”故障模式。根据 SACP/0.1 协议，`human_approval_id` 为 null 且无验证凭证，直接违反“无凭证不信任（No receipt, no trust）”核心原则。系统必须拒绝自动提升操作，返回 412 状态码，将资源保留在 `pending_verification` 状态，并强制路由至人工审批节点。未提供"
+        }
+      ],
+      "passed": 3,
+      "failed": 0
+    },
+    {
+      "name": "glm_strong",
+      "model": "glm-4.7",
+      "endpoint_host": "open.bigmodel.cn",
+      "env_key": "ZHIPU_API_KEY",
+      "skipped": false,
+      "case_results": [
+        {
+          "case_id": "duplicate_handoff",
+          "expected_status": 409,
+          "actual_status": 409,
+          "pass": true,
+          "response_ok": true,
+          "http_status": 200,
+          "finish_reason": "stop",
+          "total_tokens": 888,
+          "elapsed_sec": 20.0,
+          "status_text": "duplicate_handoff",
+          "verdict": "reject",
+          "required_fix": "Return or link the existing receipt. Do not redo the work.",
+          "excerpt": "```yaml\nstatus_code: 409\nstatus_text: duplicate_handoff\nverdict: reject\nreceipt_completeness: n/a\nclaim_findings: n/a\nmemory_warning: n/a\nnext_owner: n/a\nhuman_decision_required: false\nrequired_fix: Return or link the existing receipt. Do not redo the work.\n```\n\n检测到重复的 `handoff_id` 和相同的 `source_fingerprint`，且已知存在状态码为 200 的历史回执。根据 SACP/0.1 协议，此为重复移交场景，应拒绝执行并返回 409 错误，直接引用已有回执而非重复工作。"
+        },
+        {
+          "case_id": "missing_evidence",
+          "expected_status": 412,
+          "actual_status": 412,
+          "pass": true,
+          "response_ok": true,
+          "http_status": 200,
+          "finish_reason": "stop",
+          "total_tokens": 975,
+          "elapsed_sec": 24.401,
+          "status_text": "missing_evidence",
+          "verdict": "REJECTED",
+          "required_fix": "Provide a trusted source for the fact or downgrade claim_type to 'inference' and support_status to 'unverified'.",
+          "excerpt": "```yaml\nstatus_code: 412\nstatus_text: missing_evidence\nverdict: REJECTED\nreceipt_completeness: complete\nclaim_findings:\n  - text: \"SACP guarantees correct agent work.\"\n    issue: \"Claim type is 'retrieved_fact' with 'supported' status, but 'source_id' is 'none'.\"\n    rule_violation: \"Missing evidence for a retrieved_fact.\"\nmemory_warning: none\nnext_owner: Human\nhuman_decision_required: true\nrequired_fix: \"Provide a trusted source for the fact or downgrade claim_type to 'inference' and support_st"
+        },
+        {
+          "case_id": "memory_candidate_auto_promoted",
+          "expected_status": 412,
+          "actual_status": 412,
+          "pass": true,
+          "response_ok": true,
+          "http_status": 200,
+          "finish_reason": "stop",
+          "total_tokens": 933,
+          "elapsed_sec": 11.842,
+          "status_text": "missing_evidence",
+          "verdict": "invalid_packet",
+          "required_fix": "Keep memory pending and provide approval evidence before PROMOTE.",
+          "excerpt": "```yaml\nstatus_code: 412\nstatus_text: missing_evidence\nverdict: invalid_packet\nreceipt_completeness: incomplete\nclaim_findings:\n  - claim_type: user_statement\n    support_status: unsupported\n    note: \"human_approval_id is null, no evidence provided for promotion.\"\nmemory_warning: \"memory_candidate_auto_promoted\"\nnext_owner: human\nhuman_decision_required: true\nrequired_fix: \"Keep memory pending and provide approval evidence before PROMOTE.\"\n```\n\n诊断说明：该案例中代理尝试将状态为 `pending_verification` 的记忆项自动提升为"
+        }
+      ],
+      "passed": 3,
+      "failed": 0
+    },
+    {
+      "name": "kimi_strong",
+      "model": "kimi-k2.6",
+      "endpoint_host": "api.moonshot.cn",
+      "env_key": "KIMI_API_KEY",
+      "skipped": false,
+      "case_results": [
+        {
+          "case_id": "duplicate_handoff",
+          "expected_status": 409,
+          "actual_status": null,
+          "pass": false,
+          "response_ok": false,
+          "http_status": 400,
+          "finish_reason": null,
+          "total_tokens": null,
+          "elapsed_sec": 0.214,
+          "status_text": null,
+          "verdict": null,
+          "required_fix": null,
+          "excerpt": "{\"error\":{\"message\":\"invalid temperature: only 0.6 is allowed for this model\",\"type\":\"invalid_request_error\"}}"
+        },
+        {
+          "case_id": "missing_evidence",
+          "expected_status": 412,
+          "actual_status": null,
+          "pass": false,
+          "response_ok": false,
+          "http_status": 400,
+          "finish_reason": null,
+          "total_tokens": null,
+          "elapsed_sec": 0.166,
+          "status_text": null,
+          "verdict": null,
+          "required_fix": null,
+          "excerpt": "{\"error\":{\"message\":\"invalid temperature: only 0.6 is allowed for this model\",\"type\":\"invalid_request_error\"}}"
+        },
+        {
+          "case_id": "memory_candidate_auto_promoted",
+          "expected_status": 412,
+          "actual_status": null,
+          "pass": false,
+          "response_ok": false,
+          "http_status": 400,
+          "finish_reason": null,
+          "total_tokens": null,
+          "elapsed_sec": 0.135,
+          "status_text": null,
+          "verdict": null,
+          "required_fix": null,
+          "excerpt": "{\"error\":{\"message\":\"invalid temperature: only 0.6 is allowed for this model\",\"type\":\"invalid_request_error\"}}"
+        }
+      ],
+      "passed": 0,
+      "failed": 3
+    }
+  ]
+}

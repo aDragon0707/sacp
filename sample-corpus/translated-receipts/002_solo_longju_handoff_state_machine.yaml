@@ -1,0 +1,30 @@
+protocol: SACP/0.1
+type: receipt
+method: COMPLETE
+status_code: 200
+handoff_id: corpus_002_solo_longju_handoff_state_machine
+attempt_id: attempt_001
+agent_id: corpus_translator
+processed_at: 2026-05-07T23:51:00+08:00
+source_fingerprint: sha256:corpus-002-selected-excerpt
+claims:
+  - text: "The raw worklog identifies two prior handoff-state mistakes."
+    claim_type: user_statement
+    source_id: raw-runs/002_solo_longju_handoff_state_machine.md
+    support_status: supported
+  - text: "The raw worklog defines changed source_fingerprint under same handoff_id as rework or update, not duplicate."
+    claim_type: user_statement
+    source_id: raw-runs/002_solo_longju_handoff_state_machine.md
+    support_status: supported
+  - text: "The raw worklog says human promotion has not been approved."
+    claim_type: user_statement
+    source_id: raw-runs/002_solo_longju_handoff_state_machine.md
+    support_status: supported
+verification:
+  status: passed
+  method: "manual SACP receipt translation from selected raw excerpt"
+  evidence_id: raw-runs/002_solo_longju_handoff_state_machine.md
+residual_risk: "The receipt preserves the worklog's own verification claim but does not rerun the underlying state-machine tests."
+next_owner: Human
+human_decision_required: true
+

@@ -1,0 +1,26 @@
+protocol: SACP/0.1
+type: receipt
+method: COMPLETE
+status_code: 200
+handoff_id: corpus_006_socrates_handoff_protocol
+attempt_id: attempt_001
+agent_id: corpus_translator
+processed_at: 2026-05-07T23:55:00+08:00
+source_fingerprint: sha256:corpus-006-selected-excerpt
+claims:
+  - text: "The handoff protocol defines startup reading order and scoped working rules."
+    claim_type: user_statement
+    source_id: raw-runs/006_socrates_handoff_protocol.md
+    support_status: supported
+  - text: "The handoff protocol says review assistants should attack assumptions rather than write production code by default."
+    claim_type: user_statement
+    source_id: raw-runs/006_socrates_handoff_protocol.md
+    support_status: supported
+verification:
+  status: passed
+  method: "manual SACP receipt translation from selected protocol excerpt"
+  evidence_id: raw-runs/006_socrates_handoff_protocol.md
+residual_risk: "This receipt captures protocol instructions but does not verify whether agents followed them."
+next_owner: NextAgent
+human_decision_required: false
+

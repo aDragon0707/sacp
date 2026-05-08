@@ -1,0 +1,26 @@
+protocol: SACP/0.1
+type: receipt
+method: COMPLETE
+status_code: 200
+handoff_id: corpus_008_sacp_multi_model_observations
+attempt_id: attempt_001
+agent_id: corpus_translator
+processed_at: 2026-05-07T23:57:00+08:00
+source_fingerprint: sha256:corpus-008-selected-excerpt
+claims:
+  - text: "The multi-model Dirty Run observation reports DeepSeek, Qwen, and GLM at 10/10 and Kimi at 9/10."
+    claim_type: tool_result
+    source_id: agentops-doctor/reports/OBSERVATIONS_2026-05-07.md
+    support_status: supported
+  - text: "The observation says model parameters should be recorded in conformance runners."
+    claim_type: inference
+    source_id: agentops-doctor/reports/OBSERVATIONS_2026-05-07.md
+    support_status: supported
+verification:
+  status: passed
+  method: "manual translation from generated multi-model test report"
+  evidence_id: agentops-doctor/reports/OBSERVATIONS_2026-05-07.md
+residual_risk: "The receipt depends on the generated report and does not rerun the model APIs."
+next_owner: ProtocolMaintainer
+human_decision_required: false
+

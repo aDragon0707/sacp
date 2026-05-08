@@ -1,0 +1,30 @@
+protocol: SACP/0.1
+type: receipt
+method: COMPLETE
+status_code: 200
+handoff_id: corpus_001_solo_ai01_agentops_distillation
+attempt_id: attempt_001
+agent_id: corpus_translator
+processed_at: 2026-05-07T23:50:00+08:00
+source_fingerprint: sha256:corpus-001-selected-excerpt
+claims:
+  - text: "The raw worklog claims AgentOps Doctor direction was distilled into company memory and navigation."
+    claim_type: user_statement
+    source_id: raw-runs/001_solo_ai01_agentops_distillation.md
+    support_status: supported
+  - text: "The raw worklog explicitly says no benchmark, skill publication, or external upload was performed."
+    claim_type: user_statement
+    source_id: raw-runs/001_solo_ai01_agentops_distillation.md
+    support_status: supported
+  - text: "Founder approval remains required before public scope and publish timing."
+    claim_type: user_statement
+    source_id: raw-runs/001_solo_ai01_agentops_distillation.md
+    support_status: supported
+verification:
+  status: passed
+  method: "manual SACP receipt translation from selected raw excerpt"
+  evidence_id: raw-runs/001_solo_ai01_agentops_distillation.md
+residual_risk: "This receipt did not independently verify changed files; it only translates the selected worklog excerpt."
+next_owner: Human
+human_decision_required: true
+

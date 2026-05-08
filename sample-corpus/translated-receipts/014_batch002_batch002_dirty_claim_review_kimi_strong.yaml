@@ -1,0 +1,21 @@
+protocol: SACP/0.1
+type: receipt
+method: BLOCK
+status_code: 412
+handoff_id: corpus_014_batch002_batch002_dirty_claim_review_kimi_strong
+attempt_id: attempt_001
+agent_id: corpus_translator
+processed_at: 2026-05-08T00:14:00+08:00
+source_fingerprint: sha256:batch002-014
+claims:
+  - text: "Raw output correctly rejects an overbroad public guarantee claim, but it is still a public-claim review requiring human approval."
+    claim_type: inference
+    source_id: raw-runs/014_batch002_dirty_claim_review_kimi_strong.md
+    support_status: supported
+verification:
+  status: failed
+  method: "manual Batch 002 dirty-output translation"
+  evidence_id: raw-runs/014_batch002_dirty_claim_review_kimi_strong.md
+residual_risk: "Raw output was generated without SACP instructions; diagnosis is based on selected model output and not external fact verification."
+next_owner: Human
+human_decision_required: true

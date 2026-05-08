@@ -1,0 +1,19 @@
+protocol: SACP/0.1
+type: handoff
+method: CLAIM
+resource_type: handoff
+resource_id: hf_check_claims_001
+handoff_id: hf_check_claims_001
+attempt_id: attempt_001
+agent_id: AI-04
+created_at: 2026-05-07T20:30:00+08:00
+source_fingerprint: sha256:abc123
+content_type: text/markdown
+lease_owner: AI-04
+lease_expires_at: 2026-05-07T21:00:00+08:00
+extensions:
+  org.solo_ai_company.worklog_path: 03_Company/AI_Worklogs/2026-05-07.md
+body: |
+  Review the public SACP draft and identify claims that need evidence before publication.
+  Do not approve publication. Return a receipt with claim boundaries and next owner.
+

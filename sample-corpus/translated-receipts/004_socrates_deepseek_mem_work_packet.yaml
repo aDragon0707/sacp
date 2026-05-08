@@ -1,0 +1,30 @@
+protocol: SACP/0.1
+type: receipt
+method: BLOCK
+status_code: 412
+handoff_id: corpus_004_socrates_deepseek_mem_work_packet
+attempt_id: attempt_001
+agent_id: corpus_translator
+processed_at: 2026-05-07T23:53:00+08:00
+source_fingerprint: sha256:corpus-004-selected-excerpt
+claims:
+  - text: "The work packet requires created memory drafts to remain pending_verification."
+    claim_type: user_statement
+    source_id: raw-runs/004_socrates_deepseek_mem_work_packet.md
+    support_status: supported
+  - text: "The work packet forbids automatic verified promotion and Core Memory writes."
+    claim_type: user_statement
+    source_id: raw-runs/004_socrates_deepseek_mem_work_packet.md
+    support_status: supported
+  - text: "The work packet is a task request, not proof that the implementation was completed."
+    claim_type: inference
+    source_id: raw-runs/004_socrates_deepseek_mem_work_packet.md
+    support_status: supported
+verification:
+  status: blocked
+  method: "task-packet completion boundary review"
+  evidence_id: raw-runs/004_socrates_deepseek_mem_work_packet.md
+residual_risk: "No implementation output or validation result is included in the selected excerpt."
+next_owner: ImplementingAgent
+human_decision_required: false
+

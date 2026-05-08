@@ -1,0 +1,28 @@
+protocol: SACP/0.1
+type: receipt
+method: BLOCK
+status_code: 301
+handoff_id: hf_publish_sacp_readme_001
+attempt_id: attempt_003
+agent_id: Coordinator
+processed_at: 2026-05-07T22:25:00+08:00
+source_fingerprint: sha256:publish-request-v3
+claims:
+  - text: "The founder decided not to publish this draft yet."
+    claim_type: user_statement
+    source_id: human_decision_2026-05-07_no_publish
+    support_status: supported
+  - text: "The previous publish task is superseded by the newer human decision."
+    claim_type: inference
+    source_id: human_decision_2026-05-07_no_publish
+    support_status: supported
+verification:
+  status: passed
+  method: "human decision precedence check"
+  evidence_id: human_decision_2026-05-07_no_publish
+residual_risk: "No publication should proceed until a newer human decision changes this state."
+next_owner: Human
+human_decision_required: true
+extensions:
+  sacp.experimental.precedence: human_decision_over_agent_task
+

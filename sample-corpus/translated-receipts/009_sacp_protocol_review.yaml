@@ -1,0 +1,30 @@
+protocol: SACP/0.1
+type: receipt
+method: COMPLETE
+status_code: 200
+handoff_id: corpus_009_sacp_protocol_review
+attempt_id: attempt_001
+agent_id: corpus_translator
+processed_at: 2026-05-07T23:58:00+08:00
+source_fingerprint: sha256:corpus-009-selected-excerpt
+claims:
+  - text: "The protocol review says SACP/0.1 is coherent enough to be an MVP protocol kit."
+    claim_type: inference
+    source_id: raw-runs/009_sacp_protocol_review.md
+    support_status: supported
+  - text: "The protocol review says the validator is structural, not semantic."
+    claim_type: inference
+    source_id: raw-runs/009_sacp_protocol_review.md
+    support_status: supported
+  - text: "The protocol review says SACP/0.1 is not ready for a grand standard claim."
+    claim_type: inference
+    source_id: raw-runs/009_sacp_protocol_review.md
+    support_status: supported
+verification:
+  status: passed
+  method: "manual translation of protocol review judgments"
+  evidence_id: raw-runs/009_sacp_protocol_review.md
+residual_risk: "These are reviewer judgments, not retrieved external facts."
+next_owner: ProtocolMaintainer
+human_decision_required: false
+

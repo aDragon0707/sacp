@@ -1,0 +1,30 @@
+protocol: SACP/0.1
+type: receipt
+method: COMPLETE
+status_code: 200
+handoff_id: corpus_007_socrates_multi_agent_extract
+attempt_id: attempt_001
+agent_id: corpus_translator
+processed_at: 2026-05-07T23:56:00+08:00
+source_fingerprint: sha256:corpus-007-selected-excerpt
+claims:
+  - text: "The raw extract describes a four-agent state machine with Evidence Ledger separation."
+    claim_type: user_statement
+    source_id: raw-runs/007_socrates_multi_agent_extract.md
+    support_status: supported
+  - text: "The raw extract says Agent 2 output is always inference, not retrieved_fact."
+    claim_type: user_statement
+    source_id: raw-runs/007_socrates_multi_agent_extract.md
+    support_status: supported
+  - text: "The raw extract aligns closely with SACP claim_type boundaries."
+    claim_type: inference
+    source_id: raw-runs/007_socrates_multi_agent_extract.md
+    support_status: supported
+verification:
+  status: passed
+  method: "manual SACP receipt translation and claim-boundary mapping"
+  evidence_id: raw-runs/007_socrates_multi_agent_extract.md
+residual_risk: "The extract text had encoding artifacts; this receipt uses the selected readable summary only."
+next_owner: ProtocolMaintainer
+human_decision_required: false
+

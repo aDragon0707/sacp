@@ -1,0 +1,26 @@
+case_id: dirty_missing_evidence
+description: "A public claim is marked as supported but provides no evidence."
+incoming_receipt:
+  protocol: SACP/0.1
+  type: receipt
+  method: COMPLETE
+  status_code: 200
+  handoff_id: hf_public_claim_001
+  attempt_id: attempt_001
+  agent_id: AI-04
+  claims:
+    - text: "SACP guarantees correct agent work."
+      claim_type: retrieved_fact
+      source_id: none
+      support_status: supported
+  verification:
+    status: passed
+    method: "self review"
+  next_owner: Human
+  human_decision_required: true
+expected_result:
+  status_code: 412
+  status_text: missing_evidence
+  verdict: revise
+  required_fix: "Provide a trusted source or downgrade claim_type/support_status."
+
