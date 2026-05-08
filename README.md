@@ -2,100 +2,24 @@
 
 > No receipt, no trust.
 
-AgentOps Doctor checks whether AI agents are pretending to be done.
+SACP is an open, text-first receipt protocol for AI agent work.
 
-Powered by **SACP: State-Aware Collaboration Protocol**.
+It does not replace LangGraph, MCP, A2A, OpenClaw, or agent SDKs. It adds a small audit layer:
+
+```text
+When an agent says "done", it should produce a checkable work receipt.
+```
+
+AgentOps Doctor is the first reference tool in this repo. Paste in messy agent output, and it returns a status code, claim findings, missing evidence, next owner, required fix, and a translated SACP receipt.
 
 Chinese version: [README.zh-CN.md](./README.zh-CN.md)
 
-## 30-Second Demo
-
-Many agent outputs look like this:
-
-```text
-Done.
-All tests passed.
-Ready to publish.
-I saved it to memory.
-```
-
-AgentOps Doctor turns that into:
-
-```text
-status_code
-claim_findings
-missing evidence
-required_fix
-translated_receipt
-```
-
-Other skills do the work.
-
-AgentOps Doctor audits the work.
-
-## What This Is
-
-SACP is an open, text-first protocol for auditable AI agent work receipts.
-
-AgentOps Doctor is the first reference skill built on top of SACP.
-
-Dirty Run is the benchmark suite.
-
-Validator is the reference tool.
-
-```text
-SACP = protocol
-AgentOps Doctor = skill
-Dirty Run = benchmark
-validator.py = reference checker
-```
-
-## One Sentence
-
-An agent work item is not complete until it produces a receipt that identifies the task, attempt, claims, evidence, verification, remaining risk, next owner, and human decision boundary.
-
-## Why It Exists
-
-LLMs are stateless token predictors.
-
-Real work needs:
-
-- state
-- ownership
-- evidence
-- retry
-- handoff
-- audit
-- human approval
-- memory boundaries
-
-SACP defines a small shared contract for those needs.
-
-## Core Objects
-
-1. **SACP Envelope**
-
-   The protocol wrapper. It identifies protocol version, method, resource, handoff, attempt, agent, source fingerprint, content type, and optional lease.
-
-2. **SACP Receipt**
-
-   The proof of work. It records what happened, what was claimed, what evidence supports those claims, what verification ran, what risk remains, and who owns the next step.
-
-3. **SACP Dirty Run Benchmark**
-
-   The adversarial state-discipline benchmark. It checks duplicate handoffs, missing evidence, bad claim typing, memory pollution, active leases, expired leases, and incomplete receipts.
-
-4. **AgentOps Doctor Skill**
-
-   The first reference skill. It takes messy agent output and returns a SACP-style diagnosis and translated receipt.
-
-## Quick Start
-
-Run the reference skill:
+## 3-Minute Quick Start
 
 ```bash
-cd agentops-doctor-skill
-python agentops_doctor.py examples/done_but_no_receipt.md
+git clone https://github.com/aDragon0707/sacp.git
+cd sacp
+python agentops-doctor-skill/agentops_doctor.py agentops-doctor-skill/examples/done_but_no_receipt.md
 ```
 
 Expected output includes:
@@ -112,71 +36,105 @@ required_fix
 translated_receipt
 ```
 
+Try a missing-evidence example:
+
+```bash
+python agentops-doctor-skill/agentops_doctor.py agentops-doctor-skill/examples/unsupported_test_claim.md
+```
+
 Validate protocol examples:
 
 ```bash
 python validator.py --examples --strict
 ```
 
-Validate sample-corpus translated receipts in PowerShell:
+## Test Your Own Agent Output
 
-```powershell
-$files = Get-ChildItem sample-corpus\translated-receipts -Filter *.yaml | ForEach-Object { $_.FullName }
-python validator.py @files --strict
+Save any final agent response, worklog, or handoff as a text file:
+
+```bash
+echo "Done. All tests passed. Ready to publish." > my-agent-output.md
+python agentops-doctor-skill/agentops_doctor.py my-agent-output.md
 ```
 
-## Repository Map
+AgentOps Doctor does not execute the original task. It checks whether the output is auditable:
 
-- [SPEC.md](./SPEC.md): core protocol semantics
+- Did it claim completion without a receipt?
+- Did it claim tests passed without command output?
+- Did it promote memory without approval?
+- Did it identify the next owner?
+- Did it cross a human decision boundary?
+
+## What Is In This Repo
+
+```text
+SACP = protocol
+AgentOps Doctor = reference skill / CLI
+Dirty Run = adversarial state-discipline benchmark
+validator.py = local reference checker
+```
+
+Core docs:
+
+- [SPEC.md](./SPEC.md): protocol semantics
 - [ENVELOPE.md](./ENVELOPE.md): envelope fields and examples
 - [RECEIPT.md](./RECEIPT.md): receipt fields and examples
-- [STATUS_CODES.md](./STATUS_CODES.md): v0.1 status codes
-- [EXTENSIONS.md](./EXTENSIONS.md): extension and compatibility rules
-- [DIRTY_RUN_CASES.md](./DIRTY_RUN_CASES.md): adversarial state-discipline cases
+- [STATUS_CODES.md](./STATUS_CODES.md): status codes
+- [DIRTY_RUN_CASES.md](./DIRTY_RUN_CASES.md): adversarial cases
 - [CONFORMANCE.md](./CONFORMANCE.md): conformance levels
-- [LIFECYCLE.md](./LIFECYCLE.md): packet lifecycle
-- [GOVERNANCE.md](./GOVERNANCE.md): change and compatibility rules
-- [VALIDATOR.md](./VALIDATOR.md): local reference validator
-- [PROTOCOL_REVIEW.md](./PROTOCOL_REVIEW.md): adversarial protocol review
-- [examples/](./examples): valid and dirty YAML examples
-- [agentops-doctor/](./agentops-doctor): prompt workflow and multi-model Dirty Run runner
-- [agentops-doctor-skill/](./agentops-doctor-skill): one-command reference skill
-- [sample-corpus/](./sample-corpus): real messy workflow samples translated into SACP receipts
+- [agentops-doctor-skill/](./agentops-doctor-skill): one-command reference tool
+- [examples/](./examples): valid and dirty packets
+- [sample-corpus/](./sample-corpus): messy outputs translated into SACP receipts
+- [COMMUNITY_OUTREACH.md](./COMMUNITY_OUTREACH.md): community sharing and feedback prompts
 
-## AgentOps Doctor vs Other Skills
+## Concrete Example
 
-| Other Skills | AgentOps Doctor |
-|---|---|
-| summarize text | checks whether the summary has evidence |
-| use GitHub | checks whether claimed changes were verified |
-| write to Obsidian | checks whether memory was promoted safely |
-| automate workflows | checks handoff, owner, retry, and receipt state |
+Raw agent output:
 
-Most skills help agents do work.
+```text
+Done. All tests passed. I saved the user preference to verified memory.
+```
 
-AgentOps Doctor audits whether that work is trustworthy.
+SACP breaks that into separate audit questions:
 
-## What SACP Is Not
+```text
+1. "Done" without a receipt is not enough.
+2. "All tests passed" needs command output or evidence.
+3. "verified memory" requires human or trusted-system approval.
+```
 
-SACP/0.1 is not:
+Likely diagnosis:
 
-- an agent runtime
-- an AI operating system
-- a database
-- a cloud platform
-- a model training pipeline
-- a legal compliance proof
-- a universal intelligence benchmark
-- a replacement for MCP, A2A, LangGraph, or agent SDKs
+```text
+412 missing_evidence
+required_fix: attach test output, downgrade unsupported claims, require human approval for memory promotion.
+```
 
-SACP complements those systems by defining a small receipt layer for auditable work state.
+SACP is not about making the model smarter. It is about making agent work state, evidence, ownership, and decision boundaries explicit.
 
-## Current Test Assets
+## When To Use It
 
-- Dirty Run: 10 adversarial state-discipline cases
-- Multi-model run: DeepSeek, Qwen, GLM, and Kimi strong-model results
-- Sample Corpus Batch 001: 10 real workflow excerpts
-- Sample Corpus Batch 002: 20 natural messy model outputs
+- You are building an agent skill and want to check whether its output is acceptable.
+- You run multi-agent workflows and need handoff, attempt, receipt, and next-owner discipline.
+- You compare models or frameworks and want to audit their completion claims.
+- You collect hallucination, missing evidence, and memory-pollution examples.
+- You want AI work to move from chat logs toward auditable work records.
+
+## How To Contribute
+
+The most useful contributions are concrete:
+
+- Submit a messy agent output.
+- Report a bad AgentOps Doctor diagnosis.
+- Propose a Dirty Run case.
+- Add adapter notes for LangGraph, CrewAI, MCP, A2A, OpenClaw, or another framework.
+- Improve docs so new developers can run the project faster.
+
+Open an issue using the templates in this repo.
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md).
+
+If you want to share the project with developer communities, see [COMMUNITY_OUTREACH.md](./COMMUNITY_OUTREACH.md).
 
 ## Boundary
 
@@ -185,3 +143,5 @@ SACP helps agents produce auditable work receipts.
 It does not guarantee correctness.
 
 AgentOps Doctor audits the output. It does not execute the underlying task.
+
+SACP/0.1 is an experimental alpha. The next useful step is more messy outputs, adapter examples, and adversarial test cases.
