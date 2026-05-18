@@ -1,8 +1,10 @@
-# AgentOps Doctor + SACP/0.1
+# SACP: Scalable Audit and Control Protocol for AI Agents
 
 > No receipt, no trust.
 
-SACP is an open, text-first receipt protocol for AI agent work.
+SACP is an open, text-first protocol for auditing long-horizon AI agent work.
+
+As agents move from single replies to tool use, memory, delegation, and multi-step workflows, final-answer evaluation is no longer enough. SACP makes the intermediate work auditable: what was claimed, what evidence supports it, who owns the next step, whether memory was promoted safely, and where human approval is required.
 
 It does not replace LangGraph, MCP, A2A, OpenClaw, or agent SDKs. It adds a small audit layer:
 
@@ -11,6 +13,33 @@ When an agent says "done", it should produce a checkable work receipt.
 ```
 
 AgentOps Doctor is the first reference tool in this repo. Paste in messy agent output, and it returns a status code, claim findings, missing evidence, next owner, required fix, and a translated SACP receipt.
+
+## Why This Exists
+
+Modern agent failures often happen before the final answer:
+
+- a subagent accepts a task but loses the original goal;
+- a model claims tests passed without showing command output;
+- a memory item is promoted from inference to "verified fact";
+- a tool result is summarized without preserving evidence;
+- a handoff says "done" but leaves no owner for the next step.
+
+SACP turns these failures into auditable work records. The protocol is intentionally small: Markdown/YAML packets, local validators, dirty-run cases, and example receipts that can be inspected by humans and tools.
+
+## Why OpenAI Models And Codex Matter
+
+SACP is model-agnostic, but OpenAI models and Codex are a natural testbed because coding agents already perform long-horizon work: reading files, editing code, running tests, delegating subtasks, and reporting completion. API credits would be used to turn this repo into a stronger open-source evaluation harness:
+
+- develop the reference implementation, validators, examples, and docs with Codex;
+- run GPT-based agent workflows and translate them into SACP receipts;
+- test failure modes such as memory drift, delegated task drift, missing evidence, and tool-use audit gaps;
+- compare baseline agent outputs against SACP-instrumented workflows;
+- publish reproducible logs, benchmark tasks, and cost summaries.
+
+See:
+
+- [Research proposal](./docs/research-proposal.md)
+- [OpenAI Codex Fund plan](./docs/openai-codex-fund-plan.md)
 
 Chinese version: [README.zh-CN.md](./README.zh-CN.md)
 
