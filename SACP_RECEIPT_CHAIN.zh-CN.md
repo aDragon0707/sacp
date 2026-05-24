@@ -70,7 +70,11 @@ extensions:
 | `sacp.chain.checkpoint` | 外部 runtime、trace、checkpoint 或会话引用 |
 | `sacp.chain.stop_rule` | 下一棒必须继承的停止条件或人工边界 |
 
-说明：这里用 `project`、`module`、`parent_handoff` 等 extension key，而不是 `project_id`、`module_id`、`parent_handoff_id`，是为了避免 extension key 看起来像在覆盖 SACP 核心字段。它们表达的仍然是 project_id/module_id/parent_handoff_id 语义。
+规范 key 是 `project`、`module`、`parent_handoff`。
+
+这些名字故意保持短，因为命名空间已经是 `extensions.sacp.chain.*`。它们不会覆盖 SACP 核心字段，但会成为这个 profile 的 canonical spelling。
+
+在协议外部讨论语义时，可以把它们理解成 project_id、module_id、parent_handoff_id 这些身份概念。payload 里不要再新增一套 `_id` key，除非未来的 profile 版本明确声明 alias 规则。
 
 ## 规则
 

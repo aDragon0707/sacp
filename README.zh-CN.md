@@ -1,4 +1,4 @@
-# AgentOps Doctor + SACP/0.1
+# SACP: Scalable Audit and Control Protocol for AI Agents
 
 > No receipt, no trust.  
 > 没有回执，就不该信任。
@@ -46,6 +46,21 @@ python validator.py --examples --strict
 
 - [Longju SACP Runtime Guard](./ADOPTION_CASE_LONGJU.zh-CN.md)
 
+## Receipt Chain
+
+Receipt Chain 是 SACP 面向长周期、多模块、多 agent 协作的可选 profile。它不是 runtime、scheduler、database 或 trace system，而是把 audit state 保留下来，方便下一棒继续接。
+
+阅读：
+
+- [SACP_RECEIPT_CHAIN.md](./SACP_RECEIPT_CHAIN.md)
+- [SACP_RECEIPT_CHAIN.zh-CN.md](./SACP_RECEIPT_CHAIN.zh-CN.md)
+- [多 agent 项目示例](./examples/receipt_chain_multi_agent_project.yaml)
+- [研究发布示例](./examples/receipt_chain_research_publish.yaml)
+
+## 协议设计参考
+
+SACP 借鉴 HTTP、Git、OpenTelemetry、MIME 和 RFC 风格的规范性语言，但仍保持为一个小型审计协议。参见 [PROTOCOL_DESIGN_REFERENCES.md](./PROTOCOL_DESIGN_REFERENCES.md)。
+
 ## 用你自己的 agent 输出测试
 
 把任意 agent 的最终回复、worklog 或 handoff 保存成一个文本文件：
@@ -78,25 +93,28 @@ validator.py = 本地参考检查器
 - [ENVELOPE.md](./ENVELOPE.md)：Envelope 字段和示例
 - [RECEIPT.md](./RECEIPT.md)：Receipt 字段和示例
 - [STATUS_CODES.md](./STATUS_CODES.md)：状态码
-- [DIRTY_RUN_CASES.md](./DIRTY_RUN_CASES.md)：脏场景测试
-- [CONFORMANCE.md](./CONFORMANCE.md)：一致性级别
-- [agentops-doctor-skill/](./agentops-doctor-skill)：一条命令可运行的参考工具
+- [DIRTY_RUN_CASES.md](./DIRTY_RUN_CASES.md)：脏场景
+- [PROTOCOL_EVOLUTION.md](./PROTOCOL_EVOLUTION.md)：反馈如何变成 dirty case、extension、profile 和 core candidate
+- [SACP_RECEIPT_CHAIN.md](./SACP_RECEIPT_CHAIN.md)：长任务协作 profile
+- [PROTOCOL_DESIGN_REFERENCES.md](./PROTOCOL_DESIGN_REFERENCES.md)：协议设计参考
+- [docs/SACP_AGENT_TEST_PROMPT.md](./docs/SACP_AGENT_TEST_PROMPT.md)：给 OpenClaw、harness 或其他 agent 的测试 prompt
+- [docs/DUAL_AGENT_TRIAL_RUNBOOK.md](./docs/DUAL_AGENT_TRIAL_RUNBOOK.md)：双 agent 试跑手册
+- [agentops-doctor-skill/](./agentops-doctor-skill)：一条命令的参考工具
 - [examples/](./examples)：合法和脏样例
-- [sample-corpus/](./sample-corpus)：messy output 到 SACP receipt 的样本集
-- [ADOPTION_CASE_LONGJU.zh-CN.md](./ADOPTION_CASE_LONGJU.zh-CN.md)：公开安全的本地采用案例
-- [COMMUNITY_OUTREACH.zh-CN.md](./COMMUNITY_OUTREACH.zh-CN.md)：社区传播和征集反馈文案
+- [sample-corpus/](./sample-corpus)：转写成 SACP receipt 的 messy output 样本
+- [ADOPTION_CASE_LONGJU.md](./ADOPTION_CASE_LONGJU.md)：公开安全的本地采用案例
 
 ## 真实采用案例
 
-SACP/0.1 已经在 Longju 这个本地单 Agent operator 里作为状态层试运行过。
+SACP/0.1 已经在 Longju 这个本地 agent operator 上试过，作为状态层来工作。
 
-这次接入使用本地 `.sacp/` 文件账本，并用 runtime guard 包住四个 gate：
+这次接入使用的是文件式 `.sacp/` ledger，并由一个 runtime guard 保护四个 gate：
 
 ```text
 PreTask -> ContextCheck -> PreExternalAction -> PostTask
 ```
 
-公开安全 trial 覆盖了假完成、prompt injection、skill distillation 和重复 handoff：
+公开安全 trial 覆盖了 false completion、prompt injection、skill distillation 和重复 handoff：
 
 ```text
 false completion      -> 412 missing_evidence
@@ -107,7 +125,7 @@ duplicate handoff     -> 204 no_action_needed
 
 阅读案例：[ADOPTION_CASE_LONGJU.zh-CN.md](./ADOPTION_CASE_LONGJU.zh-CN.md)
 
-## 一个真实例子
+## 具体例子
 
 原始 agent 输出：
 
@@ -115,51 +133,35 @@ duplicate handoff     -> 204 no_action_needed
 Done. All tests passed. I saved the user preference to verified memory.
 ```
 
-SACP 视角会拆成三个问题：
+SACP 会把它拆成三件事：
 
 ```text
-1. “Done” 没有 receipt，不足以验收。
-2. “All tests passed” 没有测试命令和输出，应该是 missing_evidence。
-3. “verified memory” 需要人类或受信系统批准，不能自动晋升。
+1. “Done” 没有 receipt，不够。
+2. “All tests passed” 需要命令输出或证据。
+3. “verified memory” 需要人类或可信系统批准。
 ```
 
-所以它可能得到：
+因此它大概率会得到：
 
 ```text
 412 missing_evidence
-required_fix: attach test output, downgrade unsupported claims, require human approval for memory promotion.
+required_fix: 附上测试输出，降级不支持的声明，并要求人类批准记忆晋升。
 ```
 
 这就是 SACP 的用途：不是让模型更聪明，而是让 agent 的工作状态、证据、责任边界更清楚。
 
-## 什么场景适合用
+## 什么时候用
 
-- 你在写 agent skill，想检查它的输出是否可验收。
-- 你在做多 agent 协作，需要 handoff、attempt、receipt、next_owner。
-- 你想比较不同模型或 agent 框架的“完成声明”是否可信。
-- 你想收集 hallucination、missing evidence、memory pollution 这类失败样本。
-- 你想把 AI 工作流从“聊天记录”变成“可审计工作流”。
-
-## 怎么参与
-
-最有价值的反馈不是抽象建议，而是真实样本：
-
-- 提交一段 messy agent output。
-- 提交一个 AgentOps Doctor 误判案例。
-- 提交一个新 Dirty Run case。
-- 提交某个框架的适配建议，例如 LangGraph、CrewAI、MCP、A2A、OpenClaw。
-- 改进文档，让第一次来的开发者更快跑通。
-
-你可以直接开 issue。仓库已经准备了 issue 模板。
-
-贡献规则见 [CONTRIBUTING.zh-CN.md](./CONTRIBUTING.zh-CN.md)。
-
-如果你想把项目发到社区，可以参考 [COMMUNITY_OUTREACH.zh-CN.md](./COMMUNITY_OUTREACH.zh-CN.md)。
+- 你在做 agent skill，想检查输出是否可接受。
+- 你在跑多 agent workflow，需要 handoff、attempt、receipt 和 next-owner 纪律。
+- 你想比较不同模型或框架的完成声明是否可信。
+- 你想收集 hallucination、missing evidence、memory pollution 的样本。
+- 你想让 AI 工作从聊天记录，变成可审计工作记录。
 
 ## 边界
 
-SACP 帮助 agent 产出可审查的工作回执，但它不保证事实正确。
+SACP 帮助 agent 产出可审计的工作回执，但它不保证事实正确。
 
-AgentOps Doctor 审查输出，但不执行原任务。
+AgentOps Doctor 审核输出，但不执行原任务。
 
-SACP/0.1 仍然是 experimental alpha。现在最需要的是更多真实 messy output、更多适配样例、更多反例测试。
+SACP/0.1 仍然是 experimental alpha。下一步最有价值的是更多 messy output、adapter 示例和 adversarial test cases。

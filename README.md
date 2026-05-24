@@ -87,6 +87,10 @@ Receipt Chain is an optional SACP profile for long-running work, multi-module wo
 
 Read: [SACP_RECEIPT_CHAIN.md](./SACP_RECEIPT_CHAIN.md), [Chinese version](./SACP_RECEIPT_CHAIN.zh-CN.md), [multi-agent project example](./examples/receipt_chain_multi_agent_project.yaml), and [research publish example](./examples/receipt_chain_research_publish.yaml).
 
+## Protocol Design References
+
+SACP borrows protocol discipline from HTTP, Git, OpenTelemetry, MIME, and RFC-style normative wording, but stays a small audit protocol. See [PROTOCOL_DESIGN_REFERENCES.md](./PROTOCOL_DESIGN_REFERENCES.md).
+
 ## Test Your Own Agent Output
 
 Save any final agent response, worklog, or handoff as a text file:

@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SACP 项目介绍与演示</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: oklch(14% 0.02 250);
+      --panel: oklch(19% 0.022 250);
+      --panel-2: oklch(24% 0.025 250);
+      --text: oklch(96% 0.01 250);
+      --muted: oklch(76% 0.015 250);
+      --line: oklch(38% 0.025 250 / 0.35);
+      --accent: oklch(77% 0.11 210);
+      --accent-2: oklch(82% 0.08 145);
+      --good: oklch(78% 0.1 145);
+      --warn: oklch(78% 0.12 70);
+      --radius: 18px;
+      --radius-sm: 12px;
+      --shadow: 0 24px 60px oklch(0% 0 0 / 0.28);
+      --font-sans: "Aptos", "Segoe UI", system-ui, sans-serif;
+      --font-serif: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
+      --font-mono: "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      background:
+        radial-gradient(1000px 650px at 15% 10%, oklch(30% 0.07 230 / 0.38), transparent 55%),
+        linear-gradient(180deg, oklch(13% 0.02 250), oklch(11% 0.02 250) 65%, oklch(10% 0.02 250));
+      color: var(--text);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+    }
+    .wrap { max-width: 1180px; margin: 0 auto; padding: 34px 22px 58px; }
+    .hero, .section, .tile, .callout, .note {
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .hero {
+      padding: 34px;
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 20px;
+      margin-bottom: 22px;
+    }
+    .kicker {
+      color: var(--accent-2);
+      font: 700 12px/1 var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+    }
+    h1 {
+      margin: 12px 0 16px;
+      font: 700 clamp(2.6rem, 5vw, 4.8rem)/0.96 var(--font-serif);
+      max-width: 11ch;
+    }
+    .lede { max-width: 64ch; color: var(--muted); font-size: 1.05rem; }
+    .hero-summary {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+      padding: 18px;
+      border-radius: 16px;
+      background: oklch(100% 0 0 / 0.03);
+      border: 1px solid var(--line);
+    }
+    .hero-summary .row {
+      display: flex;
+      gap: 10px;
+      align-items: baseline;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .hero-summary .row:last-child { border-bottom: 0; }
+    .hero-summary .k { color: var(--muted); font: 700 12px/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.12em; }
+    .hero-summary .v { text-align: right; font-weight: 600; }
+    .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 18px; }
+    .section { padding: 24px; margin-bottom: 18px; }
+    .span-12 { grid-column: span 12; }
+    .span-7 { grid-column: span 7; }
+    .span-5 { grid-column: span 5; }
+    .span-6 { grid-column: span 6; }
+    h2 {
+      margin: 0 0 12px;
+      font: 700 24px/1.15 var(--font-serif);
+    }
+    h3 {
+      margin: 0 0 10px;
+      font: 700 18px/1.2 var(--font-sans);
+    }
+    p { margin: 0 0 12px; }
+    ul { margin: 0; padding-left: 20px; }
+    li { margin-bottom: 8px; }
+    .muted { color: var(--muted); }
+    .pill-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: oklch(100% 0 0 / 0.05);
+      border: 1px solid var(--line);
+      font: 600 12px/1 var(--font-mono);
+    }
+    .pill.good { color: var(--good); border-color: color-mix(in oklch, var(--good) 68%, var(--line)); }
+    .pill.warn { color: var(--warn); border-color: color-mix(in oklch, var(--warn) 68%, var(--line)); }
+    .callout {
+      padding: 18px 20px;
+      margin-top: 14px;
+    }
+    .mono {
+      font-family: var(--font-mono);
+      background: oklch(100% 0 0 / 0.05);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+    }
+    .table {
+      display: grid;
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .table-row {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      gap: 14px;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: oklch(100% 0 0 / 0.03);
+    }
+    .table-row .k { color: var(--accent-2); font: 700 12px/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.12em; }
+    .table-row .v { color: var(--text); }
+    .timeline {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 16px;
+    }
+    .step {
+      min-height: 88px;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: oklch(100% 0 0 / 0.03);
+    }
+    .step .num {
+      color: var(--accent-2);
+      font: 700 12px/1 var(--font-mono);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .step .txt { color: var(--text); font-size: 14px; line-height: 1.45; }
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+    .receipt-box {
+      padding: 18px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: oklch(100% 0 0 / 0.03);
+    }
+    .status-line {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 14px 0 16px;
+    }
+    .footer-note {
+      margin-top: 18px;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: oklch(100% 0 0 / 0.03);
+      color: var(--muted);
+    }
+    @media (max-width: 940px) {
+      .hero, .two-col { grid-template-columns: 1fr; }
+      .span-7, .span-5, .span-6, .span-12 { grid-column: span 12; }
+      .timeline { grid-template-columns: 1fr; }
+      .table-row { grid-template-columns: 1fr; }
+      h1 { max-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <div>
+        <div class="kicker">SACP / Scalable Audit and Control Protocol</div>
+        <h1>把 AI 工作变成可审计的回执。</h1>
+        <p class="lede">
+          SACP 不是 runtime，也不是 scheduler。它是一层很薄、但很关键的审计协议。
+          它的作用很直接：让“完成”变成可验证的记录，让“下一棒”变得明确，让“是否能发布”变成有证据可看的判断。
+        </p>
+      </div>
+      <div class="hero-summary">
+        <div class="row"><span class="k">核心口号</span><span class="v">No receipt, no trust.</span></div>
+        <div class="row"><span class="k">核心作用</span><span class="v">审计 claims、evidence、next owner、human boundary</span></div>
+        <div class="row"><span class="k">适用场景</span><span class="v">长周期、多模块、多 agent、跨模型续接</span></div>
+        <div class="row"><span class="k">设计原则</span><span class="v">小核心，扩展命名空间，profile 先行</span></div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <article class="section span-7">
+        <h2>项目是什么</h2>
+        <p>
+          这是一个开源协议项目，目标是为 AI 工作流提供统一的“工作回执”语义。
+          它关心的是：谁做了什么、依据是什么、下一步归谁、哪里必须停下来请人类确认。
+        </p>
+        <div class="pill-row">
+          <span class="pill good">协议</span>
+          <span class="pill good">回执</span>
+          <span class="pill good">证据</span>
+          <span class="pill good">下一棒</span>
+          <span class="pill warn">不保证正确性</span>
+        </div>
+        <div class="callout">
+          <h3>项目边界</h3>
+          <p class="muted">
+            SACP 不是执行引擎，不负责调度 agent，不存数据库，不替代框架。
+            它只定义可审计状态如何被表达、传递和复核。
+          </p>
+        </div>
+      </article>
+
+      <article class="section span-5">
+        <h2>它解决什么问题</h2>
+        <div class="table">
+          <div class="table-row">
+            <div class="k">问题</div>
+            <div class="v">Agent 说“done”，但没有证据。</div>
+          </div>
+          <div class="table-row">
+            <div class="k">问题</div>
+            <div class="v">多 agent 交接后，没人知道下一棒是谁。</div>
+          </div>
+          <div class="table-row">
+            <div class="k">问题</div>
+            <div class="v">公开发布前，缺少人类批准边界。</div>
+          </div>
+          <div class="table-row">
+            <div class="k">问题</div>
+            <div class="v">长任务中，局部完成被误认为全局完成。</div>
+          </div>
+        </div>
+      </article>
+
+      <article class="section span-12">
+        <h2>SACP 的工作链</h2>
+        <div class="timeline">
+          <div class="step"><div class="num">1</div><div class="txt">project<br>项目开始</div></div>
+          <div class="step"><div class="num">2</div><div class="txt">module<br>分配模块</div></div>
+          <div class="step"><div class="num">3</div><div class="txt">handoff<br>交接给下一棒</div></div>
+          <div class="step"><div class="num">4</div><div class="txt">attempt<br>执行一次尝试</div></div>
+          <div class="step"><div class="num">5</div><div class="txt">receipt<br>写出回执</div></div>
+          <div class="step"><div class="num">6</div><div class="txt">next owner<br>指向下一棒</div></div>
+          <div class="step"><div class="num">7</div><div class="txt">child handoff<br>继续下一段工作</div></div>
+        </div>
+      </article>
+
+      <article class="section span-6">
+        <h2>没有 SACP 时</h2>
+        <div class="receipt-box">
+          <div class="status-line">
+            <span class="pill warn">状态：模糊</span>
+            <span class="pill warn">证据：缺失</span>
+            <span class="pill warn">下一棒：不清楚</span>
+          </div>
+          <div class="mono">Done. All tests passed. Ready to publish.</div>
+          <p class="muted" style="margin-top:14px;">
+            这句话像完成，但不是可审计完成。它没有把证据、边界和接棒关系说清楚。
+          </p>
+        </div>
+      </article>
+
+      <article class="section span-6">
+        <h2>有 SACP 时</h2>
+        <div class="receipt-box">
+          <div class="status-line">
+            <span class="pill good">状态：200 completed</span>
+            <span class="pill good">证据：已附上</span>
+            <span class="pill">human decision：可见</span>
+          </div>
+          <div class="table">
+            <div class="table-row"><div class="k">claim boundary</div><div class="v">只声明这一轮 attempt 做了什么。</div></div>
+            <div class="table-row"><div class="k">evidence refs</div><div class="v">validator 输出、diff、review note。</div></div>
+            <div class="table-row"><div class="k">next owner</div><div class="v">Reviewer，必要时继续交给 Human。</div></div>
+            <div class="table-row"><div class="k">stop rule</div><div class="v">缺证据或缺批准，就不要发布。</div></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="section span-12">
+        <h2>Receipt Chain 为什么重要</h2>
+        <p>
+          Receipt Chain 是 SACP 的一个可选 profile，面向长周期、多模块、多 agent 协作。
+          它不是 runtime，也不是 scheduler。它的作用是把 parent handoff、evidence、decision、stop rule 串起来，
+          让一个长任务在多次交接后仍然可以被审计、被接棒、被复盘。
+        </p>
+        <div class="footer-note">
+          <strong>一句话总结：</strong>
+          SACP 不负责把 AI 做对，它负责让 AI 工作过程可追踪、可复核、可交接。
+        </div>
+      </article>
+
+      <article class="section span-12">
+        <h2>这一轮我们做了什么</h2>
+        <ul>
+          <li>新增了 Receipt Chain 主文档和中英双语说明。</li>
+          <li>补了多 agent 项目示例和研究发布示例。</li>
+          <li>把 changed-source 重新工作规则同步到了 lifecycle、status codes、dirty cases 和 doctor prompt。</li>
+          <li>新增了协议设计参考，明确借鉴 HTTP、Git、OpenTelemetry、MIME 和 RFC 风格规范语言。</li>
+          <li>把扩展命名、canonical spelling、alias 规则钉死，避免外部实现抄乱。</li>
+        </ul>
+      </article>
+
+      <article class="section span-12">
+        <h2>项目总结</h2>
+        <p>
+          SACP 的价值不在于“更聪明”，而在于“更可审计”。它把 agent 工作从一串聊天记录，变成可以验证、可以接力、可以留痕的协议记录。
+          对长周期任务、多模块协作和多 agent 交接来说，这层薄协议比再加一个大 runtime 更有用。
+        </p>
+        <p class="muted">
+          最重要的设计选择是：核心保持小，增长放在 extensions 和 profiles 里，任何新想法先经过 dirty case 和 reference example，再考虑进核心。
+        </p>
+      </article>
+    </section>
+  </div>
+</body>
+</html>
