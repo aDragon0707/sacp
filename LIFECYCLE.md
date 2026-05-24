@@ -116,7 +116,14 @@ Common block reasons:
 
 Retry does not create a new task.
 
-If `handoff_id` is unchanged but `source_fingerprint` changes, the receiver should treat the packet as changed input or rework, not as `409 duplicate_handoff`.
+If `handoff_id` is unchanged but `source_fingerprint` changes, the receiver must treat the packet as changed input or rework.
+Canonical rule:
+
+```text
+changed source_fingerprint -> 202 accepted_processing -> rework
+```
+
+Do not return `409 duplicate_handoff` for changed input unless the packet is otherwise a duplicate of an already processed same-source request.
 
 Recommended result:
 

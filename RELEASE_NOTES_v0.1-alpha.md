@@ -2,6 +2,8 @@
 
 Release date: 2026-05-08
 
+This repository now also includes a docs-only evolution update that sharpens the Receipt Chain profile and the changed-source rework rule. See [CHANGELOG.md](./CHANGELOG.md) for the latest repo-level note.
+
 Chinese version: [RELEASE_NOTES_v0.1-alpha.zh-CN.md](./RELEASE_NOTES_v0.1-alpha.zh-CN.md)
 
 ## Summary
@@ -67,4 +69,3 @@ More precise boundary:
 SACP helps agents produce auditable work receipts.
 It does not guarantee correctness.
 ```
-

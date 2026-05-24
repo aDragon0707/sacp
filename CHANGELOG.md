@@ -1,5 +1,26 @@
 # Changelog
 
+## Receipt Chain and Protocol Evolution Update
+
+Date: 2026-05-24
+
+### Added
+
+- Receipt Chain profile docs and examples for long-running, multi-agent work.
+- Protocol Evolution guidance for keeping core growth behind feedback, dirty cases, extensions, and profiles.
+- Sample corpus review notes 031 and 032.
+
+### Clarified
+
+- Same `handoff_id` plus changed `source_fingerprint` maps to `202 accepted_processing` and rework.
+- That case must not be downgraded to `409 duplicate_handoff` unless the same-source request was already processed.
+
+### Non-goals
+
+- No new required fields.
+- No validator rule changes.
+- No runtime, scheduler, or database layer.
+
 ## SACP/0.1 MVP Hardening Draft
 
 Date: 2026-05-07

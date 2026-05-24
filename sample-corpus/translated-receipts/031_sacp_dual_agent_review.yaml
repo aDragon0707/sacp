@@ -1,0 +1,36 @@
+protocol: SACP/0.1
+type: receipt
+method: COMPLETE
+status_code: 200
+handoff_id: corpus_031_sacp_dual_agent_review
+attempt_id: attempt_001
+agent_id: corpus_translator
+processed_at: 2026-05-24T16:35:00+08:00
+source_fingerprint: sha256:corpus-031-local-dual-review
+claims:
+  - text: "The local validator strict run passed all listed examples."
+    claim_type: tool_result
+    source_id: validator.py --examples --strict
+    support_status: supported
+  - text: "The done_but_no_receipt example was diagnosed as 400 invalid_packet."
+    claim_type: tool_result
+    source_id: agentops-doctor-skill/examples/done_but_no_receipt.md
+    support_status: supported
+  - text: "The unsupported_test_claim example was diagnosed as 412 missing_evidence."
+    claim_type: tool_result
+    source_id: agentops-doctor-skill/examples/unsupported_test_claim.md
+    support_status: supported
+  - text: "Receipt Chain is useful for long-running and multi-agent handoff without changing SACP core fields."
+    claim_type: inference
+    source_id: SACP_RECEIPT_CHAIN.md
+    support_status: supported
+verification:
+  status: passed
+  method: "local validator and doctor checks plus docs review"
+  evidence_id:
+    - validator.py --examples --strict
+    - agentops-doctor-skill/examples/done_but_no_receipt.md
+    - agentops-doctor-skill/examples/unsupported_test_claim.md
+residual_risk: "The changed source_fingerprint rework rule could be worded more explicitly and should be rechecked before release."
+next_owner: ProtocolMaintainer
+human_decision_required: false

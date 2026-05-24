@@ -1,6 +1,8 @@
 # SACP v0.1-alpha 发布说明
 
-发布日期：2026-05-08
+发布日期: 2026-05-08
+
+仓库里现在还有一条最新的文档型演进说明，用来收紧 Receipt Chain 资料和 changed-source 重新工作规则。请看 [CHANGELOG.md](./CHANGELOG.md)。
 
 English version: [RELEASE_NOTES_v0.1-alpha.md](./RELEASE_NOTES_v0.1-alpha.md)
 
@@ -20,17 +22,17 @@ SACP v0.1-alpha 是第一个公开实验版协议包，用来让 AI agent 工作
 - sample corpus receipts
 - OpenClaw / Longju 接入蓝图
 
-## 适合用来做什么
+## 适合做什么
 
-你可以用这个版本：
+你可以用这个版本来：
 
 - 理解 SACP receipt 模型
-- 审查 messy agent output
+- 审核 messy agent output
 - 把 worklog 翻译成 SACP receipt
 - 测试 agent 的脏行为
 - 给 agent 框架做集成原型
 
-## 不适合用来宣称什么
+## 不适合做什么
 
 这个版本不是：
 
@@ -51,7 +53,7 @@ python agentops-doctor-skill/agentops_doctor.py agentops-doctor-skill/examples/d
 预期行为：
 
 - examples 通过校验
-- AgentOps Doctor 返回状态码、问题、required fix 和 translated receipt
+- AgentOps Doctor 返回状态码、发现、required fix 和 translated receipt
 
 ## 发布边界
 
@@ -67,4 +69,3 @@ No receipt, no trust.
 SACP 帮助 agent 产出可审查的工作回执。
 它不保证正确性。
 ```
-
