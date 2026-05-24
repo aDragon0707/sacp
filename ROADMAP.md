@@ -18,6 +18,7 @@ Scope:
 - Local validator
 - Example packets
 - Sample corpus receipts
+- Protocol evolution rules
 
 Non-goals:
 
@@ -27,6 +28,12 @@ Non-goals:
 - no automatic memory promotion
 - no model training pipeline
 - no correctness guarantee
+
+## Receipt Chain Profile
+
+Status: documentation and examples first; validator enforcement later only if dirty cases prove the need.
+
+Receipt Chain is a profile for long-running, multi-module, and multi-agent work. It keeps the SACP core small by storing chain metadata in namespaced extensions rather than adding new required fields. See [SACP_RECEIPT_CHAIN.md](./SACP_RECEIPT_CHAIN.md).
 
 ## v0.2: Schemas And Stronger Validation
 
@@ -42,6 +49,7 @@ Candidate additions:
 
 Candidate adapters:
 
+- Docs-only adapter note template
 - OpenClaw / Longju state ledger
 - LangGraph checkpoint mapping
 - MCP tool-call evidence mapping
@@ -88,4 +96,3 @@ Do not freeze:
 - storage
 - model provider
 - training method
-

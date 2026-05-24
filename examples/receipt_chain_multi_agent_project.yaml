@@ -1,0 +1,39 @@
+protocol: SACP/0.1
+type: receipt
+method: COMPLETE
+status_code: 200
+handoff_id: hf_coder_receipt_chain_docs_001
+attempt_id: attempt_001
+agent_id: Coder
+processed_at: 2026-05-24T16:10:00+08:00
+source_fingerprint: sha256:receipt-chain-docs-v1
+claims:
+  - text: "The coding subtask added the Receipt Chain documentation draft and project-chain example files."
+    claim_type: tool_result
+    source_id: git_diff_receipt_chain_docs_001
+    support_status: supported
+  - text: "The new example files passed the local SACP validator command for those files."
+    claim_type: tool_result
+    source_id: validator_output_receipt_chain_docs_001
+    support_status: supported
+verification:
+  status: passed
+  method: "local diff and validator review"
+  evidence_id: validator_output_receipt_chain_docs_001
+residual_risk: "Reviewer has not yet checked whether the examples communicate the intended long-running handoff pattern clearly."
+next_owner: Reviewer
+human_decision_required: false
+extensions:
+  sacp.chain.profile: sacp-chain
+  sacp.chain.project: sacp_receipt_chain_profile
+  sacp.chain.module: docs
+  sacp.chain.parent_handoff: hf_receipt_chain_root_001
+  sacp.chain.depends_on:
+    - hf_receipt_chain_plan_001
+  sacp.chain.receipts:
+    - rcpt_receipt_chain_plan_001
+  sacp.chain.evidence:
+    - git_diff_receipt_chain_docs_001
+    - validator_output_receipt_chain_docs_001
+  sacp.chain.stop_rule: "Stop before claiming the whole project is complete; this receipt only covers the Coder attempt."
+

@@ -10,6 +10,8 @@ SACP should grow through evidence, not imagination.
 Rough consensus + running dirty cases.
 ```
 
+Protocol evolution details live in [PROTOCOL_EVOLUTION.md](./PROTOCOL_EVOLUTION.md).
+
 ## Change Rule
 
 A new core field, method, resource type, claim type, support status, or status code requires:
@@ -104,4 +106,3 @@ Unsafe public claims:
 - SACP solves all memory problems.
 - SACP makes agents autonomous.
 - SACP is legal or compliance proof.
-

@@ -81,6 +81,12 @@ Read the public-safe adoption case:
 
 - [Longju SACP Runtime Guard](./ADOPTION_CASE_LONGJU.md)
 
+## Receipt Chain For Long-Running Agent Work
+
+Receipt Chain is an optional SACP profile for long-running work, multi-module work, multi-agent handoff, and cross-model continuation. It does not schedule agents. It preserves auditable work state between them.
+
+Read: [SACP_RECEIPT_CHAIN.md](./SACP_RECEIPT_CHAIN.md), [Chinese version](./SACP_RECEIPT_CHAIN.zh-CN.md), [multi-agent project example](./examples/receipt_chain_multi_agent_project.yaml), and [research publish example](./examples/receipt_chain_research_publish.yaml).
+
 ## Test Your Own Agent Output
 
 Save any final agent response, worklog, or handoff as a text file:
@@ -109,17 +115,26 @@ validator.py = local reference checker
 
 Core docs:
 
+- [STATUS.md](./STATUS.md): current project status and community ask
 - [SPEC.md](./SPEC.md): protocol semantics
 - [ENVELOPE.md](./ENVELOPE.md): envelope fields and examples
 - [RECEIPT.md](./RECEIPT.md): receipt fields and examples
 - [STATUS_CODES.md](./STATUS_CODES.md): status codes
 - [DIRTY_RUN_CASES.md](./DIRTY_RUN_CASES.md): adversarial cases
 - [CONFORMANCE.md](./CONFORMANCE.md): conformance levels
+- [PROTOCOL_EVOLUTION.md](./PROTOCOL_EVOLUTION.md): how feedback becomes dirty cases, extensions, profiles, and core candidates
+- [SACP_RECEIPT_CHAIN.md](./SACP_RECEIPT_CHAIN.md): optional profile for long-running, multi-agent work
+- [docs/ADAPTER_NOTE_TEMPLATE.md](./docs/ADAPTER_NOTE_TEMPLATE.md): docs-only mapping template for agent frameworks
+- [docs/SACP_AGENT_TEST_PROMPT.md](./docs/SACP_AGENT_TEST_PROMPT.md): prompt for OpenClaw, herness, or another agent to test SACP
+- [docs/DUAL_AGENT_TRIAL_RUNBOOK.md](./docs/DUAL_AGENT_TRIAL_RUNBOOK.md): two-agent trial workflow and result table
 - [agentops-doctor-skill/](./agentops-doctor-skill): one-command reference tool
 - [examples/](./examples): valid and dirty packets
 - [sample-corpus/](./sample-corpus): messy outputs translated into SACP receipts
 - [ADOPTION_CASE_LONGJU.md](./ADOPTION_CASE_LONGJU.md): public-safe local adoption case
 - [COMMUNITY_OUTREACH.md](./COMMUNITY_OUTREACH.md): community sharing and feedback prompts
+- [OUTBOUND_PR_PLAYBOOK.md](./OUTBOUND_PR_PLAYBOOK.md): maintainer outreach and docs-only PR playbook
+- [SOCIAL_LAUNCH_PACKET.md](./SOCIAL_LAUNCH_PACKET.md): X, Reddit, Hacker News, and Chinese community launch copy
+- [SACP_OUTBOUND_HANDOFF_2026-05-17.md](./SACP_OUTBOUND_HANDOFF_2026-05-17.md): continuation packet for outbound official PR work
 
 ## Real Adoption Case
 

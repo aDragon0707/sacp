@@ -1,0 +1,48 @@
+protocol: SACP/0.1
+type: receipt
+method: BLOCK
+status_code: 412
+status_text: missing_evidence
+handoff_id: hf_research_publish_claim_review_001
+attempt_id: attempt_001
+agent_id: FactChecker
+processed_at: 2026-05-24T16:20:00+08:00
+source_fingerprint: sha256:research-publish-claim-draft-v1
+claims:
+  - text: "The founder believes the receipt framing is strategically important."
+    claim_type: user_statement
+    source_id: founder_message_receipt_chain_001
+    support_status: supported
+  - text: "SACP is likely differentiated by semantic work receipts rather than runtime scheduling."
+    claim_type: inference
+    source_id: analysis_note_receipt_chain_001
+    support_status: supported
+  - text: "The draft public claim that SACP is the only agent audit protocol lacks retrieved evidence."
+    claim_type: inference
+    source_id: public_claim_draft_001
+    support_status: supported
+verification:
+  status: blocked
+  method: "claim boundary and publish approval review"
+  evidence_id: claim_boundary_review_001
+residual_risk: "No retrieved source proves the exclusivity claim, and no human publish approval is attached."
+next_owner: Human
+human_decision_required: true
+extensions:
+  sacp.chain.profile: sacp-chain
+  sacp.chain.project: sacp_public_research_publish
+  sacp.chain.module: fact_check
+  sacp.chain.parent_handoff: hf_research_publish_root_001
+  sacp.chain.depends_on:
+    - hf_research_collect_sources_001
+    - hf_research_synthesize_positioning_001
+  sacp.chain.receipts:
+    - rcpt_collect_sources_001
+    - rcpt_synthesize_positioning_001
+  sacp.chain.evidence:
+    - founder_message_receipt_chain_001
+    - analysis_note_receipt_chain_001
+    - claim_boundary_review_001
+  sacp.chain.decisions: []
+  sacp.chain.stop_rule: "Stop before publishing any exclusivity or market claim unless retrieved evidence and human approval exist."
+
