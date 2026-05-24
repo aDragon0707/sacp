@@ -38,7 +38,7 @@ Date: 2026-05-07
 ### Non-Goals
 
 - No JSON Schema yet.
-- No CLI yet.
+- No packaged CLI distribution yet.
 - No HTTP binding yet.
 - No database.
 - No automatic memory promotion.
