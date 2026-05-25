@@ -1,0 +1,125 @@
+{
+  "one_line_diagnosis": "SACP 已经是一个完成度很高的协议包，但更像“完成了、只是外部转化还不够稳”的样本；围绕 receipt、claim、evidence、handoff 和 human boundary 讲得很清楚，只是主 CTA 更适合放到 run example / submit messy output / open issue，而不是继续把 star 放在叙事中心。",
+  "scores": {
+    "total_score": 85,
+    "score_band": "high",
+    "dimension_scores": {
+      "product_narrative": 100,
+      "user_pain": 100,
+      "publishing_rhythm": 50,
+      "technical_translation": 100,
+      "conversion_action": 75
+    },
+    "primary_bottleneck": "publishing_rhythm",
+    "secondary_bottleneck": "conversion_action",
+    "scoring_reasons": [
+      "SACP 的 README、中文 README 和产品说明已经能清楚表达协议在解决什么问题。",
+      "COMMUNITY_OUTREACH 已经把技术内容转成外部发布素材，说明技术翻译能力强。",
+      "公开证据能看到 changelog、outreach kit 和 release notes，但还不能证明有稳定的每周发布节奏。",
+      "当前更适合的主 CTA 是 run example / submit messy output / open issue，而不是只把 star 放在中心。",
+      "转化动作已经存在，但不同读者的下一步动作还可以进一步分层。"
+    ]
+  },
+  "bottlenecks": {
+    "primary": "publishing_rhythm",
+    "secondary": "conversion_action"
+  },
+  "recommendations": {
+    "primary_skill": "launch-calendar",
+    "secondary_skill": "changelog-to-post",
+    "reason_zh": "SACP 不是缺素材，而是需要把 changelog、Receipt Chain、Longju adoption case、dirty run examples 和 community outreach 固定拆成平台化发布节奏。当前对外叙事更适合围绕 receipt、run example、submit messy output、open issue 和 contributor call 展开，而不是继续以 star 为中心。",
+    "input_materials": [
+      "changelog",
+      "release_note",
+      "community_outreach",
+      "adoption_case",
+      "roadmap"
+    ],
+    "expected_outputs": [
+      "seven_day_plan",
+      "platform_content_map",
+      "x_posts",
+      "reddit_post",
+      "github_discussion_seed",
+      "run_example_cta",
+      "submit_messy_output_cta",
+      "open_issue_cta",
+      "contributor_call"
+    ],
+    "guardrails": [
+      "no_growth_guarantee",
+      "no_official_adoption_claim",
+      "keep_technical_truth"
+    ]
+  },
+  "seven_day_plan": [
+    {
+      "day": 1,
+      "goal_zh": "把最近 changelog 拆成一条外部更新帖",
+      "input_materials": [
+        "CHANGELOG.md"
+      ],
+      "action_zh": "把 Receipt Chain 和 Protocol Evolution 更新改写成一条 X / GitHub Discussion 短帖，重点解释它解决哪类长期协作问题。",
+      "output_zh": "1 条外部更新帖"
+    },
+    {
+      "day": 2,
+      "goal_zh": "把 README 核心问题转成短叙事",
+      "input_materials": [
+        "README.md",
+        "PRODUCT.md"
+      ],
+      "action_zh": "写一条 “agent 说 tests passed，证据在哪里？” 的痛点帖。",
+      "output_zh": "1 条痛点短帖"
+    },
+    {
+      "day": 3,
+      "goal_zh": "把 Longju adoption case 转成案例内容",
+      "input_materials": [
+        "ADOPTION_CASE_LONGJU.md"
+      ],
+      "action_zh": "提炼 Longju runtime guard 案例。",
+      "output_zh": "1 条案例帖或短文大纲"
+    },
+    {
+      "day": 4,
+      "goal_zh": "把贡献入口拆成贡献者任务",
+      "input_materials": [
+        "CONTRIBUTING.md",
+        "ROADMAP.md"
+      ],
+      "action_zh": "列出 3 类适合贡献者的任务。",
+      "output_zh": "1 条贡献者招募帖"
+    },
+    {
+      "day": 5,
+      "goal_zh": "把 quick start 压缩成可试跑内容",
+      "input_materials": [
+        "README.md",
+        "agentops-doctor examples"
+      ],
+      "action_zh": "写一条 3 分钟 quick start 帖。",
+      "output_zh": "1 条试跑内容"
+    },
+    {
+      "day": 6,
+      "goal_zh": "拆平台版本",
+      "input_materials": [
+        "COMMUNITY_OUTREACH.md"
+      ],
+      "action_zh": "拆成 X、Reddit、GitHub Discussion、中文社区四个版本。",
+      "output_zh": "4 个平台草稿"
+    },
+    {
+      "day": 7,
+      "goal_zh": "统一 CTA 层级",
+      "input_materials": [
+        "README.md",
+        "CONTRIBUTING.md"
+      ],
+      "action_zh": "统一 run example、submit messy output、open issue、contribute dirty case 四类 CTA，把 star 放在低摩擦次位。",
+      "output_zh": "外部内容 CTA 模板"
+    }
+  ],
+  "copyable_summary": "SACP 已经有清晰的用户问题、技术翻译和贡献入口。当前更像是把协议包装成稳定的外部使用路径，而不是单纯获取 star。主瓶颈不是缺素材，而是发布节奏：需要把 README、CHANGELOG、Longju adoption case、dirty run examples 和 COMMUNITY_OUTREACH 固定转成外部内容。建议优先使用 launch-calendar，其次使用 changelog-to-post。"
+}

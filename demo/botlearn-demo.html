@@ -1,0 +1,663 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>BotLearn Indie Growth Doctor 用户流程 Demo</title>
+    <style>
+      :root {
+        --bg: #f4f1ea;
+        --paper: #fffdf8;
+        --paper-2: #f7f2e8;
+        --ink: #202224;
+        --muted: #61635f;
+        --line: #d9d0c0;
+        --blue: #2368a2;
+        --green: #23705b;
+        --red: #ae4d3e;
+        --amber: #b46b18;
+        --violet: #6c5494;
+        --shadow: 0 16px 44px rgba(55, 43, 25, 0.12);
+      }
+
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        color: var(--ink);
+        background:
+          linear-gradient(90deg, rgba(32, 34, 36, 0.055) 1px, transparent 1px),
+          linear-gradient(rgba(32, 34, 36, 0.055) 1px, transparent 1px),
+          var(--bg);
+        background-size: 34px 34px;
+        font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+        letter-spacing: 0;
+      }
+      a { color: var(--blue); }
+      button, input, textarea, select { font: inherit; }
+      button { cursor: pointer; }
+
+      .shell {
+        width: min(1520px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 16px 0 28px;
+        display: grid;
+        grid-template-columns: 278px minmax(0, 1fr) 372px;
+        gap: 16px;
+      }
+      .sidebar, .main, .live {
+        border: 1px solid var(--line);
+        background: rgba(255, 253, 248, 0.92);
+        box-shadow: var(--shadow);
+      }
+      .sidebar, .live {
+        position: sticky;
+        top: 16px;
+        height: calc(100vh - 32px);
+        overflow: auto;
+        border-radius: 14px;
+        padding: 16px;
+      }
+      .main { border-radius: 16px; overflow: hidden; }
+      .brand { border-bottom: 1px solid var(--line); padding-bottom: 16px; }
+      .brand-mark {
+        width: 42px; height: 42px; display: grid; place-items: center;
+        background: var(--ink); color: var(--paper); border-radius: 9px; font-weight: 900;
+      }
+      .brand h1 { margin: 12px 0 7px; font-size: 20px; line-height: 1.18; }
+      .brand p, .muted { color: var(--muted); line-height: 1.58; }
+      .brand p { margin: 0; font-size: 13px; }
+      .nav { display: grid; gap: 8px; margin: 16px 0; }
+      .nav a {
+        display: grid; grid-template-columns: 30px 1fr; gap: 10px; align-items: center;
+        min-height: 46px; padding: 8px; border: 1px solid var(--line); border-radius: 9px;
+        color: var(--ink); background: var(--paper); text-decoration: none;
+      }
+      .nav span:first-child {
+        width: 30px; height: 30px; border-radius: 7px; display: grid; place-items: center;
+        background: var(--paper-2); color: var(--muted); font-size: 12px; font-weight: 800;
+      }
+      .notice {
+        border: 1px solid #e6c783; background: #fff4d7; color: #65420e;
+        border-radius: 10px; padding: 12px; font-size: 13px; line-height: 1.55;
+      }
+      .hero {
+        padding: 22px 24px; background: var(--paper); border-bottom: 1px solid var(--line);
+        display: flex; justify-content: space-between; align-items: center; gap: 16px;
+      }
+      .hero h2 { margin: 0; font-size: clamp(26px, 3vw, 42px); line-height: 1.08; }
+      .hero p { margin: 10px 0 0; color: var(--muted); line-height: 1.65; max-width: 760px; }
+      .actions { display: flex; flex-wrap: wrap; gap: 9px; justify-content: flex-end; }
+      .btn {
+        min-height: 39px; border: 1px solid var(--line); border-radius: 8px;
+        background: var(--paper); color: var(--ink); padding: 0 13px;
+      }
+      .btn.primary { background: var(--blue); border-color: var(--blue); color: white; font-weight: 800; }
+      .btn.green { background: var(--green); border-color: var(--green); color: white; font-weight: 800; }
+      .section { padding: 24px; border-bottom: 1px solid var(--line); }
+      .section-head { display: flex; justify-content: space-between; align-items: end; gap: 18px; margin-bottom: 16px; }
+      .eyebrow { color: var(--blue); font-size: 12px; font-weight: 900; letter-spacing: 0.11em; text-transform: uppercase; }
+      .section h3 { margin: 5px 0 0; font-size: clamp(22px, 2.2vw, 31px); }
+      .section-desc { margin: 8px 0 0; color: var(--muted); max-width: 760px; line-height: 1.65; }
+      .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+      .field { display: grid; gap: 7px; }
+      .field label { font-weight: 800; }
+      input, select, textarea {
+        width: 100%; border: 1px solid var(--line); border-radius: 8px;
+        background: var(--paper); color: var(--ink); padding: 10px 11px;
+      }
+      textarea { min-height: 92px; resize: vertical; }
+      .asset-grid, .case-grid, .skill-grid, .test-grid {
+        display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;
+      }
+      .asset {
+        display: grid; gap: 7px; padding: 12px; border: 1px solid var(--line);
+        border-radius: 9px; background: var(--paper);
+      }
+      .asset-title { display: flex; gap: 9px; align-items: center; font-weight: 800; }
+      .asset input { width: 17px; height: 17px; }
+      .card { border: 1px solid var(--line); border-radius: 10px; background: var(--paper); padding: 15px; }
+      .case-card, .skill-card { display: grid; gap: 9px; }
+      .case-card strong, .skill-card strong { font-size: 16px; }
+      .pill-row { display: flex; flex-wrap: wrap; gap: 6px; }
+      .pill {
+        display: inline-flex; align-items: center; min-height: 25px; padding: 0 8px;
+        border-radius: 999px; background: var(--paper-2); color: var(--muted);
+        font-size: 12px; font-weight: 800;
+      }
+      .pill.blue { background: #dff0ff; color: #174f7e; }
+      .pill.green { background: #daf1e9; color: #155242; }
+      .pill.amber { background: #ffefcf; color: #73450d; }
+      .question-list { display: grid; gap: 12px; }
+      .question { border: 1px solid var(--line); border-radius: 10px; background: var(--paper); padding: 14px; }
+      .q-top { display: grid; grid-template-columns: 38px 1fr; gap: 10px; }
+      .q-no {
+        width: 34px; height: 34px; display: grid; place-items: center;
+        border-radius: 8px; background: var(--paper-2); color: var(--muted);
+        font-size: 12px; font-weight: 900;
+      }
+      .q-title { font-weight: 800; line-height: 1.45; }
+      .answer-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+      .answer { min-height: 42px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper-2); color: var(--muted); }
+      .answer.active { border-color: var(--blue); background: #e7f2fb; color: var(--blue); font-weight: 900; }
+      .report-grid { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 14px; }
+      .score-line { display: grid; grid-template-columns: 150px 1fr 42px; gap: 10px; align-items: center; margin: 12px 0; }
+      .track { height: 10px; border-radius: 999px; background: var(--paper-2); overflow: hidden; }
+      .fill { height: 100%; width: 0; border-radius: inherit; }
+      .decision-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+      .decision-row:last-child { border-bottom: 0; }
+      .skill-code { color: var(--blue); font-family: Consolas, "SFMono-Regular", monospace; font-size: 13px; font-weight: 900; }
+      .io { display: grid; grid-template-columns: 74px 1fr; gap: 8px; font-size: 13px; line-height: 1.55; }
+      .io span:first-child { color: var(--muted); font-weight: 900; }
+      .plan-grid { display: grid; grid-template-columns: repeat(7, minmax(190px, 1fr)); gap: 10px; overflow-x: auto; padding-bottom: 6px; }
+      .day { min-width: 190px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); padding: 12px; }
+      .day-no { color: var(--amber); font-weight: 900; }
+      .day-title { margin-top: 8px; font-weight: 900; }
+      .day-output { margin-top: 8px; color: var(--muted); font-size: 13px; line-height: 1.55; }
+      .live h3 { margin: 0; font-size: 22px; }
+      .score-card { display: grid; grid-template-columns: 118px 1fr; gap: 14px; align-items: center; margin: 16px 0; }
+      .radial {
+        width: 118px; height: 118px; display: grid; place-items: center; border-radius: 999px;
+        background: radial-gradient(circle at center, var(--paper) 58%, transparent 59%),
+          conic-gradient(var(--blue) calc(var(--score) * 1%), var(--paper-2) 0);
+      }
+      .radial strong { font-size: 34px; }
+      .copy-area {
+        width: 100%; min-height: 190px; margin-top: 12px; border: 1px solid var(--line);
+        border-radius: 8px; background: var(--paper-2); padding: 11px;
+        font-family: Consolas, "SFMono-Regular", monospace; font-size: 12px; color: var(--ink);
+      }
+      .toast {
+        position: fixed; right: 16px; bottom: 16px; transform: translateY(16px); opacity: 0;
+        background: var(--ink); color: white; border-radius: 9px; padding: 10px 13px; transition: 160ms ease;
+      }
+      .toast.show { opacity: 1; transform: translateY(0); }
+      @media (max-width: 1180px) {
+        .shell { grid-template-columns: 1fr; }
+        .sidebar, .live { position: static; height: auto; }
+        .report-grid, .grid-2 { grid-template-columns: 1fr; }
+      }
+      @media (max-width: 760px) {
+        .shell { width: min(100% - 20px, 1520px); }
+        .hero, .section-head { align-items: flex-start; flex-direction: column; }
+        .asset-grid, .case-grid, .skill-grid, .test-grid, .answer-row { grid-template-columns: 1fr; }
+        .score-line { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">IG</div>
+          <h1>Indie Growth Doctor</h1>
+          <p>你是产品用户。这个页面带你从项目输入、基础诊断、五维报告、候选 Skill、今晚可测任务一路跑完。</p>
+        </div>
+        <nav class="nav" aria-label="流程导航">
+          <a href="#assets"><span>1</span><span>填项目与素材</span></a>
+          <a href="#questions"><span>2</span><span>回答诊断题</span></a>
+          <a href="#report"><span>3</span><span>看五维报告</span></a>
+          <a href="#skills"><span>4</span><span>用候选 Skill</span></a>
+          <a href="#tonight"><span>5</span><span>今晚手动测试</span></a>
+          <a href="#plan"><span>6</span><span>执行 7 天计划</span></a>
+        </nav>
+        <div class="notice">
+          <strong>边界：</strong>这里不接 GitHub / X API，不保存数据，不承诺 star、用户、收入或曝光结果。Skill 是 BotLearn 内容模块定义的候选工作流，公开案例只作为方法参考。
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="hero">
+          <div>
+            <h2>像真实用户一样跑一遍增长诊断</h2>
+            <p>先告诉 BotLearn 你的项目和已有素材；系统按项目类型换题，给出五维瓶颈，再把下一步压成有输入、有输出、有反虚构边界的 Skill 和今晚可测任务。</p>
+          </div>
+          <div class="actions">
+            <button class="btn" id="loadSacp">使用 SACP 样本</button>
+            <button class="btn" id="loadTechnical">纯技术项目</button>
+            <button class="btn primary" id="copyTop">复制报告</button>
+          </div>
+        </header>
+
+        <section class="section" id="assets">
+          <div class="section-head">
+            <div>
+              <div class="eyebrow">Step 1</div>
+              <h3>先选场景，不把纯技术项目硬拽去做泛营销</h3>
+              <p class="section-desc">固定题不是结束，而是底层评分骨架。项目类型会改变题目表述和后续追问；可用素材决定 Skill 是否能直接执行，缺素材时会给降级动作。</p>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="field">
+              <label for="projectName">项目名</label>
+              <input id="projectName" value="SACP" />
+            </div>
+            <div class="field">
+              <label for="goal">第一目标</label>
+              <select id="goal">
+                <option value="submit_output">让开发者提交一次 agent output</option>
+                <option value="run_example">让开发者今晚 run example</option>
+                <option value="get_stars">以 star 作为低摩擦 CTA</option>
+                <option value="find_users">找真实用户试跑</option>
+                <option value="get_trials">获取试用</option>
+                <option value="get_prs">吸引 PR / 贡献者</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="projectType">项目类型</label>
+              <select id="projectType">
+                <option value="oss">开源开发者工具</option>
+                <option value="technical">纯技术 / 库 / 协议</option>
+                <option value="solo_saas">独立 SaaS / 小产品</option>
+                <option value="demo_builder">Demo / 原型</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="secondaryGoal">第二动作</label>
+              <input id="secondaryGoal" value="引导开发者 run example / open issue" />
+            </div>
+            <div class="field" style="grid-column: 1 / -1">
+              <label for="notes">一句话背景</label>
+              <textarea id="notes">SACP 已有 README、CHANGELOG、ROADMAP、CONTRIBUTING、COMMUNITY_OUTREACH 和 AgentOps Doctor；它不是没完成，而是需要把“完成但效果不如意的 agent output”转成更稳定的试跑、提交样本和 open issue 路径。</textarea>
+            </div>
+          </div>
+          <div class="asset-grid" id="assetGrid" style="margin-top: 14px"></div>
+        </section>
+
+        <section class="section" id="questions">
+          <div class="section-head">
+            <div>
+              <div class="eyebrow">Step 2</div>
+              <h3>基础题 + 场景化表述 + 低分追问</h3>
+              <p class="section-desc">每题 0/50/100 分。纯技术项目会更关注“技术价值能否被外部读者理解”，开源项目会更关注 README、issue、release、CTA 和贡献入口。</p>
+            </div>
+            <span class="pill blue" id="questionMode"></span>
+          </div>
+          <div class="question-list" id="questionList"></div>
+          <div class="question-list" id="followupList" style="margin-top: 14px"></div>
+        </section>
+
+        <section class="section" id="report">
+          <div class="section-head">
+            <div>
+              <div class="eyebrow">Step 3</div>
+              <h3>五维报告：分数不是结论，瓶颈解释才是结论</h3>
+              <p class="section-desc">报告会说明为什么当前优先处理这个瓶颈，并把它翻译成下一步可执行的 Skill。真实接入时机器路径固定为 JSON，Markdown 只作为预览。</p>
+            </div>
+          </div>
+          <div class="report-grid">
+            <article class="card">
+              <div class="pill-row">
+                <span class="pill green" id="scoreBand"></span>
+                <span class="pill amber" id="reportGoal"></span>
+              </div>
+              <h4 id="reportTitle"></h4>
+              <p class="muted" id="reportBody"></p>
+              <div id="scoreLines"></div>
+            </article>
+            <aside class="card">
+              <h4>系统怎么判断</h4>
+              <div id="decisionList"></div>
+            </aside>
+          </div>
+        </section>
+
+        <section class="section" id="skills">
+          <div class="section-head">
+            <div>
+              <div class="eyebrow">Step 4</div>
+              <h3>Skill 不是魔法按钮，是带边界的工作流</h3>
+              <p class="section-desc">每个 Skill 都要有固定输入、固定输出和反虚构边界。没有素材时不硬生成，会提示你今晚先补哪种材料。</p>
+            </div>
+          </div>
+          <div class="skill-grid" id="skillGrid"></div>
+        </section>
+
+        <section class="section" id="tonight">
+          <div class="section-head">
+            <div>
+              <div class="eyebrow">Step 5</div>
+              <h3>今晚可测试：公开案例只当方法参考</h3>
+              <p class="section-desc">这些链接能让你马上打开真实 README、release、changelog、issue 或调度工具，拿同一套 Skill 流程跑一次。它们不是增长结果证明。</p>
+            </div>
+          </div>
+          <div class="case-grid" id="caseGrid"></div>
+          <div class="test-grid" id="testGrid" style="margin-top: 14px"></div>
+        </section>
+
+        <section class="section" id="plan">
+          <div class="section-head">
+            <div>
+              <div class="eyebrow">Step 6</div>
+              <h3>7 天计划：围绕主瓶颈和现有素材收口</h3>
+              <p class="section-desc">计划不再散成“每天随便写一条”。它会优先使用你勾选的素材；如果缺 issue、changelog 或 landing page，会先安排替代动作。</p>
+            </div>
+            <button class="btn green" id="copyPlan">复制 7 天计划</button>
+          </div>
+          <div class="plan-grid" id="planGrid"></div>
+        </section>
+      </main>
+
+      <aside class="live">
+        <h3>当前诊断</h3>
+        <div class="score-card">
+          <div class="radial" id="radial"><strong id="totalScore">0</strong></div>
+          <div>
+            <strong id="liveHeadline"></strong>
+            <p class="muted" id="liveSub"></p>
+          </div>
+        </div>
+        <div id="liveMini"></div>
+        <button class="btn primary" id="copyReport" style="width: 100%; margin-top: 14px">复制完整报告</button>
+        <button class="btn" id="copySkillPrompt" style="width: 100%; margin-top: 8px">复制今晚 Skill Prompt</button>
+        <textarea class="copy-area" id="copyArea" readonly></textarea>
+      </aside>
+    </div>
+    <div class="toast" id="toast">已复制</div>
+
+    <script>
+      const dimensions = [
+        { id: "product_narrative", name: "产品叙事", color: "#2368a2", why: "别人能否快速理解你解决什么问题，而不是只看到功能名词。" },
+        { id: "user_pain", name: "用户痛点", color: "#ae4d3e", why: "内容是否来自真实问题、issue、反馈或可验证假设。" },
+        { id: "publishing_rhythm", name: "发布节奏", color: "#b46b18", why: "工程更新能否稳定变成外部可读的内容和复盘。" },
+        { id: "technical_translation", name: "技术翻译", color: "#6c5494", why: "技术亮点能否翻译成使用场景、前后对比和限制。" },
+        { id: "conversion_action", name: "转化动作", color: "#23705b", why: "读完以后是否知道下一步做什么：run example、提交 output、提 issue、贡献，或轻量 star。" }
+      ];
+      const assets = [
+        ["readme", "README", "项目第一屏、quick start、使用示例"],
+        ["changelog", "CHANGELOG / release note", "最近改了什么、为什么值得用户关心"],
+        ["issue", "GitHub issues / Discussions", "真实问题、反馈、支持请求、feature request"],
+        ["roadmap", "ROADMAP", "接下来要做什么、哪些贡献有价值"],
+        ["contributing", "CONTRIBUTING", "如何运行、测试、提交 PR"],
+        ["landing_page", "Landing page", "首屏、价值主张、CTA"],
+        ["technical_note", "技术笔记 / 架构文档", "实现细节、取舍、性能或协议说明"],
+        ["community_outreach", "社区发布记录", "X、Reddit、Discord、中文社区、邮件列表"]
+      ];
+      const questionSets = {
+        oss: [
+          ["Q1", "product_narrative", "README 首屏是否在 10 秒内说清：这是给谁、解决什么问题、下一步怎么试？"],
+          ["Q2", "product_narrative", "项目介绍是否避免只堆技术名词，而能讲出一个明确使用场景？"],
+          ["Q3", "user_pain", "README、issue 或 Discussion 里是否能看到真实用户问题或可验证假设？"],
+          ["Q4", "user_pain", "你是否能把最近 3 个 issue / 反馈归纳成 1-2 个重复痛点？"],
+          ["Q5", "publishing_rhythm", "每次 release / changelog 后是否会同步生成外部可读的更新说明？"],
+          ["Q6", "publishing_rhythm", "你是否有固定发布节奏，而不是想起来才发一次？"],
+          ["Q7", "technical_translation", "技术亮点是否被翻译成 before / after、用户收益和限制条件？"],
+          ["Q8", "technical_translation", "示例代码、run example 或 demo 是否能让新用户低成本验证价值？"],
+          ["Q9", "conversion_action", "内容结尾是否有一个主 CTA，而不是 run example、submit output、issue、PR、star 全部混在一起？"],
+          ["Q10", "conversion_action", "README、release、社区帖里的 CTA 是否保持一致？"]
+        ],
+        technical: [
+          ["Q1", "product_narrative", "你的库、协议或技术方案是否说明了适用边界，而不只是说明实现方式？"],
+          ["Q2", "product_narrative", "是否有一句话能让非该领域专家理解它为什么存在？"],
+          ["Q3", "user_pain", "是否能指出一个真实开发者会遇到的痛点、限制或替代方案缺陷？"],
+          ["Q4", "user_pain", "技术选择是否来自可验证的问题，而不是只因为实现很酷？"],
+          ["Q5", "publishing_rhythm", "重要 commit、benchmark、release 是否会转成外部更新记录？"],
+          ["Q6", "publishing_rhythm", "是否有固定机制把技术进展写成短笔记、release note 或示例更新？"],
+          ["Q7", "technical_translation", "是否能把一个技术亮点写成使用前后对比？"],
+          ["Q8", "technical_translation", "是否明确说明限制、失败场景和不适用场景？"],
+          ["Q9", "conversion_action", "读者看完后是否知道应该 star、跑测试、引用、提 issue 还是参与讨论？"],
+          ["Q10", "conversion_action", "是否有最小可运行示例，让技术读者今晚就能验证？"]
+        ],
+        solo_saas: [
+          ["Q1", "product_narrative", "首屏是否说清目标用户和具体任务，而不是只说 AI / automation / dashboard？"],
+          ["Q2", "product_narrative", "是否能用一句话说明用户现在不用你会怎么做？"],
+          ["Q3", "user_pain", "是否有真实用户对话、支持请求或手动工作流作为证据？"],
+          ["Q4", "user_pain", "是否区分了愿意试用的人和只是觉得有趣的人？"],
+          ["Q5", "publishing_rhythm", "你是否稳定发布产品进展、案例、修复或学习记录？"],
+          ["Q6", "publishing_rhythm", "是否知道每周最少能从哪些素材产出内容？"],
+          ["Q7", "technical_translation", "功能介绍是否转成任务结果和节省的步骤？"],
+          ["Q8", "technical_translation", "是否解释了 AI / 自动化在哪里帮忙、哪里仍需人工判断？"],
+          ["Q9", "conversion_action", "首屏和结尾是否只有一个主要转化动作？"],
+          ["Q10", "conversion_action", "用户试用前是否知道需要准备什么输入材料？"]
+        ],
+        demo_builder: [
+          ["Q1", "product_narrative", "Demo 是否说明它验证哪个用户问题？"],
+          ["Q2", "product_narrative", "是否明确 Demo 能做什么、不能做什么？"],
+          ["Q3", "user_pain", "Demo 是否来自真实场景或清楚标注的假设？"],
+          ["Q4", "user_pain", "是否知道看 Demo 的人最可能卡在哪一步？"],
+          ["Q5", "publishing_rhythm", "每次 Demo 迭代后是否有外部更新或录屏说明？"],
+          ["Q6", "publishing_rhythm", "是否把 Demo 反馈转成下一轮内容或需求？"],
+          ["Q7", "technical_translation", "Demo 背后的技术实现是否能转成用户价值？"],
+          ["Q8", "technical_translation", "是否解释 Demo 与正式产品之间的边界？"],
+          ["Q9", "conversion_action", "看完 Demo 后用户是否知道要试用、留言、提反馈还是加入 waitlist？"],
+          ["Q10", "conversion_action", "Demo 页面是否有明确下一步动作？"]
+        ]
+      };
+      const options = [{ label: "没有", score: 0 }, { label: "部分有", score: 1 }, { label: "清楚稳定", score: 2 }];
+      const skillCatalog = {
+        "changelog-to-post": { name: "更新日志转内容", solves: "有 changelog / release note，但外部读者看不出为什么值得关心。", inputs: ["changelog", "release_note", "commit_summary"], outputs: ["X 短帖", "Reddit / Discussion 帖", "中文社区版本"], guardrails: ["不编造指标", "保留技术事实", "不承诺增长结果"], reference: "Common Changelog 和 GitHub Releases 都强调面向人解释变更，而不只是列 commit。", tonight: "拿最近一条 release note，写出：问题、变化、谁会受益、CTA 四段。" },
+        "tech-note-translator": { name: "技术笔记翻译器", solves: "技术表达太硬，外部开发者不知道它对自己有什么用。", inputs: ["technical_note", "architecture_note", "benchmark"], outputs: ["用户价值一句话", "before / after 对比", "限制说明"], guardrails: ["不夸大性能", "说明不适用场景", "不伪造 benchmark"], reference: "GitHub README 文档建议说明项目为什么有用、怎么开始、哪里求助。", tonight: "选一个技术亮点，改写成使用前、使用后、代价、适用边界。" },
+        "launch-calendar": { name: "发布节奏 Skill", solves: "工程材料很多，但没有稳定外部发布节奏。", inputs: ["current_goal", "recent_release", "available_assets"], outputs: ["7 天发布计划", "平台内容地图", "复盘清单"], guardrails: ["优先用已有材料", "不假装已发布", "不承诺曝光"], reference: "Postiz 这类开源调度器可作为手动排期工具；模块本身不替你接平台 API。", tonight: "把 3 条素材排到 3 个渠道：X、GitHub Discussion、中文社区。" },
+        "feedback-miner": { name: "反馈提炼 Skill", solves: "不会从 issue、评论或用户反馈里提炼痛点。", inputs: ["issue", "user_comment", "support_message"], outputs: ["痛点列表", "内容选题", "贡献任务"], guardrails: ["不伪造用户原话", "保留链接或来源", "不把单条反馈说成共识"], reference: "GitHub labels / good first issue 机制说明 issue 可以被组织成可贡献入口。", tonight: "找 3 条 issue 或评论，抽取问题、触发场景、可回应内容。" },
+        "landing-copy-doctor": { name: "首屏与 CTA 医生", solves: "读者看完 README / landing 后不知道下一步做什么。", inputs: ["readme_above_the_fold", "landing_page", "product_intro"], outputs: ["首屏标题", "价值主张", "CTA 收口建议"], guardrails: ["不写虚假客户", "不写保证结果", "不把目标写成已实现结果"], reference: "GitHub README 官方文档把用途、开始方式、帮助入口列为 README 核心内容。", tonight: "把 README 第一屏改成：谁、问题、怎么试、主 CTA。" }
+      };
+      const recommendations = {
+        product_narrative: ["landing-copy-doctor", "tech-note-translator"],
+        user_pain: ["feedback-miner", "landing-copy-doctor"],
+        publishing_rhythm: ["launch-calendar", "changelog-to-post"],
+        technical_translation: ["tech-note-translator", "changelog-to-post"],
+        conversion_action: ["landing-copy-doctor", "feedback-miner"]
+      };
+      const followups = {
+        product_narrative: ["如果只给读者 10 秒，你希望他记住哪一句？", "现在 README 首屏最像功能说明、技术说明还是用户问题说明？"],
+        user_pain: ["最近 3 条 issue / 反馈里有没有重复出现的问题？", "你能否把一个用户原话转成内容开头？"],
+        publishing_rhythm: ["最近 30 天有几次对外发布？", "每次 release 之后有没有固定复盘和二次传播？"],
+        technical_translation: ["哪个技术点最难被外部读者理解？", "你能否写出一个 before / after 对比？"],
+        conversion_action: ["你当前最希望读者做 run example、submit output、open issue、贡献还是 star？", "所有页面和帖子结尾是否都指向同一个动作？"]
+      };
+      const publicCases = [
+        { title: "GitHub README 官方说明", url: "https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes", supports: ["landing-copy-doctor", "tech-note-translator"], use: "检查 README 是否回答：做什么、为什么有用、怎么开始、哪里求助。" },
+        { title: "Open Source Guides：启动开源项目", url: "https://opensource.guide/pcm/starting-a-project/", supports: ["feedback-miner", "landing-copy-doctor"], use: "对照 README、CONTRIBUTING、issue 入口是否让新用户和贡献者能开始。" },
+        { title: "GitHub Releases 官方文档", url: "https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository", supports: ["changelog-to-post", "launch-calendar"], use: "把一次 release 写成可读说明，并连接 Discussion 或下载资产。" },
+        { title: "Common Changelog", url: "https://github.com/vweevers/common-changelog", supports: ["changelog-to-post"], use: "学习把 changelog 写给人看：解释变化、原因和升级影响。" },
+        { title: "Release Drafter", url: "https://github.com/release-drafter/release-drafter", supports: ["changelog-to-post"], use: "参考用 PR label 组织 release note 的真实开源工作流。" },
+        { title: "GitHub Labels / good first issue", url: "https://docs.github.com/en/issues/using-labels-and-milestones-to-track-work/managing-labels", supports: ["feedback-miner"], use: "把 issue 从杂乱反馈整理成 documentation、help wanted、good first issue 等入口。" },
+        { title: "Postiz 开源调度器", url: "https://github.com/gitroomhq/postiz-app", supports: ["launch-calendar"], use: "今晚可以手动把 3 条内容排进发布日历；不用把它当 BotLearn 依赖。" },
+        { title: "X 发布帖参考：IndoNLU GitHub repo", url: "https://x.com/gentaiscool/status/1314287139358609408", supports: ["changelog-to-post", "launch-calendar"], use: "观察真实发布帖如何同时交代 repo、数据/模型、starter code 和 star CTA；只作结构参考。" }
+      ];
+      const planTemplates = [
+        { title: "建立证据表", needs: ["readme", "issue", "technical_note"], action: "从现有素材抽取 5 条可验证材料：用户问题、技术事实、限制、示例、CTA。", output: "证据表 + 禁止夸大的边界" },
+        { title: "重写首屏", needs: ["readme", "landing_page"], action: "把第一屏改成：谁遇到什么问题，项目怎么帮他今晚试一次。", output: "README / landing 首屏草稿" },
+        { title: "改写 release", needs: ["changelog", "technical_note"], action: "把最近一次 changelog 改成外部可读短帖：问题、变化、适用人群、CTA。", output: "1 条 X / Discussion / 中文社区草稿" },
+        { title: "提炼反馈", needs: ["issue", "community_outreach"], action: "从 3 条 issue、评论或反馈中提炼重复痛点；没有 issue 就先写一个待验证问题。", output: "3 个痛点 + 3 个内容题目" },
+        { title: "技术翻译", needs: ["technical_note", "readme"], action: "选一个技术亮点，写成 before / after、用户收益、限制条件。", output: "技术翻译片段" },
+        { title: "CTA 收口", needs: ["readme", "contributing", "roadmap"], action: "统一 README、release、帖子结尾的主动作；SACP 场景优先 run example / submit output，其次 open issue，star 放在低摩擦次位。", output: "CTA 修订清单" },
+        { title: "发布与复盘", needs: ["community_outreach", "changelog"], action: "选择 2-3 个渠道发布，记录评论、issue、star 之外的真实反馈。", output: "下轮素材与复盘记录" }
+      ];
+      const sampleAnswers = [2, 2, 2, 2, 1, 1, 2, 2, 2, 1];
+      const technicalAnswers = [1, 1, 1, 0, 0, 0, 1, 2, 1, 0];
+      const state = { answers: [...sampleAnswers], selectedAssets: new Set(["readme", "changelog", "roadmap", "contributing", "community_outreach", "technical_note"]) };
+      const $ = (id) => document.getElementById(id);
+      function currentQuestions() { return questionSets[$("projectType").value] || questionSets.oss; }
+      function goalText() { return $("goal").selectedOptions[0].textContent; }
+      function assetTitle(id) { return (assets.find((item) => item[0] === id) || [id, id])[1]; }
+      function renderAssets() {
+        $("assetGrid").innerHTML = assets.map(([id, title, desc]) => `
+          <label class="asset">
+            <span class="asset-title"><input type="checkbox" data-asset="${id}" ${state.selectedAssets.has(id) ? "checked" : ""}>${title}</span>
+            <span class="muted">${desc}</span>
+          </label>
+        `).join("");
+        document.querySelectorAll("[data-asset]").forEach((input) => {
+          input.addEventListener("change", () => {
+            if (input.checked) state.selectedAssets.add(input.dataset.asset);
+            else state.selectedAssets.delete(input.dataset.asset);
+            render();
+          });
+        });
+      }
+      function renderQuestions() {
+        const questions = currentQuestions();
+        $("questionMode").textContent = `${$("projectType").selectedOptions[0].textContent} · ${questions.length} 题`;
+        $("questionList").innerHTML = questions.map(([qid, dim, text], index) => {
+          const dimension = dimensions.find((item) => item.id === dim);
+          return `
+            <article class="question">
+              <div class="q-top">
+                <div class="q-no">${qid}</div>
+                <div><div class="q-title">${text}</div><div class="muted">${dimension.name}：${dimension.why}</div></div>
+              </div>
+              <div class="answer-row">
+                ${options.map((option) => `<button class="answer ${state.answers[index] === option.score ? "active" : ""}" data-q="${index}" data-value="${option.score}">${option.label}</button>`).join("")}
+              </div>
+            </article>
+          `;
+        }).join("");
+        document.querySelectorAll("[data-q]").forEach((button) => {
+          button.addEventListener("click", () => {
+            state.answers[Number(button.dataset.q)] = Number(button.dataset.value);
+            render();
+          });
+        });
+      }
+      function scores() {
+        const questions = currentQuestions();
+        return dimensions.map((dimension) => {
+          const indexes = questions.map((q, i) => q[1] === dimension.id ? i : -1).filter((i) => i >= 0);
+          const sum = indexes.reduce((total, index) => total + state.answers[index], 0);
+          const score = indexes.length ? Math.round((sum / (indexes.length * 2)) * 100) : 0;
+          return { ...dimension, score };
+        });
+      }
+      function sortedScores() { return [...scores()].sort((a, b) => a.score - b.score); }
+      function totalScore() { const all = scores(); return Math.round(all.reduce((total, item) => total + item.score, 0) / all.length); }
+      function reportData() {
+        const ordered = sortedScores();
+        return { project: $("projectName").value || "你的项目", total: totalScore(), primary: ordered[0], secondary: ordered[1], ordered };
+      }
+      function selectedSkillIds() {
+        const data = reportData();
+        return [...new Set([...(recommendations[data.primary.id] || []), ...(recommendations[data.secondary.id] || [])])].slice(0, 4);
+      }
+      function band(total) { if (total >= 80) return "高准备度"; if (total >= 55) return "中等准备度"; return "早期准备度"; }
+      function renderFollowups() {
+        const weak = sortedScores().filter((item) => item.score <= 50).slice(0, 2);
+        if (!weak.length) { $("followupList").innerHTML = ""; return; }
+        $("followupList").innerHTML = `
+          <article class="question">
+            <div class="q-top"><div class="q-no">FU</div><div><div class="q-title">低分维度追问</div><div class="muted">真实接入时这里会变成开放题，用来补证据；静态页先展示会问什么。</div></div></div>
+            ${weak.map((item) => `<p class="muted"><strong>${item.name}</strong>：${(followups[item.id] || [])[0]}</p>`).join("")}
+          </article>
+        `;
+      }
+      function renderReport() {
+        const data = reportData();
+        const skillIds = selectedSkillIds();
+        $("scoreBand").textContent = `${data.total} / ${band(data.total)}`;
+        $("reportGoal").textContent = goalText();
+        $("reportTitle").textContent = `${data.project} 的五维诊断`;
+        $("reportBody").textContent = `${data.project} 当前主瓶颈是「${data.primary.name}」，次瓶颈是「${data.secondary.name}」。这不是说其他维度不重要，而是当前目标「${goalText()}」下，先补这两处最可能让后续内容和 CTA 变得可执行。本报告只基于你提供的公开材料和回答，不承诺增长结果。`;
+        $("scoreLines").innerHTML = scores().map((item) => `
+          <div class="score-line"><strong>${item.name}</strong><div class="track"><div class="fill" style="width:${item.score}%; background:${item.color}"></div></div><span>${item.score}</span></div>
+        `).join("");
+        $("decisionList").innerHTML = `
+          <div class="decision-row"><span>主瓶颈</span><strong>${data.primary.name}</strong></div>
+          <div class="decision-row"><span>为什么</span><strong>${data.primary.why}</strong></div>
+          <div class="decision-row"><span>次瓶颈</span><strong>${data.secondary.name}</strong></div>
+          <div class="decision-row"><span>推荐 Skill</span><strong>${skillIds.map((id) => skillCatalog[id].name).join(" / ")}</strong></div>
+          <div class="decision-row"><span>边界</span><strong>不承诺 star / 用户 / 收入</strong></div>
+        `;
+      }
+      function missingInputs(skill) {
+        return skill.inputs.filter((input) => !state.selectedAssets.has(input) && !state.selectedAssets.has(input.replace("_above_the_fold", "")) && input !== "release_note" && input !== "commit_summary" && input !== "current_goal" && input !== "available_assets" && input !== "product_intro");
+      }
+      function renderSkills() {
+        $("skillGrid").innerHTML = selectedSkillIds().map((id) => {
+          const skill = skillCatalog[id];
+          const missing = missingInputs(skill);
+          return `
+            <article class="card skill-card">
+              <div class="skill-code">${id}</div><strong>${skill.name}</strong><span class="muted">${skill.solves}</span>
+              <div class="io"><span>输入</span><div>${skill.inputs.join(" / ")}</div></div>
+              <div class="io"><span>输出</span><div>${skill.outputs.join(" / ")}</div></div>
+              <div class="io"><span>边界</span><div>${skill.guardrails.join(" / ")}</div></div>
+              <div class="io"><span>证据</span><div>${skill.reference}</div></div>
+              <div class="pill-row">${missing.length ? `<span class="pill amber">缺素材：${missing.join(", ")}</span>` : `<span class="pill green">今晚可直接跑</span>`}<span class="pill blue">候选 Skill，非增长保证</span></div>
+            </article>
+          `;
+        }).join("");
+      }
+      function renderCases() {
+        const ids = new Set(selectedSkillIds());
+        $("caseGrid").innerHTML = publicCases.filter((item) => item.supports.some((id) => ids.has(id))).slice(0, 6).map((item) => `
+          <article class="card case-card">
+            <strong>${item.title}</strong><span class="muted">${item.use}</span>
+            <div class="pill-row">${item.supports.map((id) => `<span class="pill">${id}</span>`).join("")}</div>
+            <a href="${item.url}" target="_blank" rel="noreferrer">打开公开材料</a>
+          </article>
+        `).join("");
+      }
+      function renderTonightTests() {
+        $("testGrid").innerHTML = selectedSkillIds().map((id) => {
+          const skill = skillCatalog[id];
+          return `<article class="card case-card"><div class="skill-code">${id}</div><strong>${skill.name} 今晚测试</strong><span class="muted">${skill.tonight}</span><button class="btn" data-copy-skill="${id}">复制这个 Skill Prompt</button></article>`;
+        }).join("");
+        document.querySelectorAll("[data-copy-skill]").forEach((button) => button.addEventListener("click", () => copy(skillPrompt(button.dataset.copySkill))));
+      }
+      function planItems() {
+        const selected = [...state.selectedAssets];
+        return planTemplates.map((item) => {
+          const missing = item.needs.filter((need) => !selected.includes(need));
+          const adapted = missing.length ? `${item.action} 当前缺 ${missing.map(assetTitle).join(" / ")}，先用 ${selected.map(assetTitle).slice(0, 2).join(" / ") || "README"} 做低配版本。` : item.action;
+          return { ...item, action: adapted, missing };
+        });
+      }
+      function renderPlan() {
+        $("planGrid").innerHTML = planItems().map((item, index) => `
+          <article class="day"><div class="day-no">Day ${index + 1}</div><div class="day-title">${item.title}</div><div class="day-output">${item.action}</div><div class="pill-row" style="margin-top: 10px"><span class="pill green">输出：${item.output}</span></div></article>
+        `).join("");
+      }
+      function reportMarkdown() {
+        const data = reportData();
+        return [`# ${data.project} BotLearn 增长诊断报告`, "", `目标：${goalText()}；第二动作：${$("secondaryGoal").value}`, `总分：${data.total} / ${band(data.total)}`, `主瓶颈：${data.primary.name}。${data.primary.why}`, `次瓶颈：${data.secondary.name}。${data.secondary.why}`, "", "## 五维分数", ...scores().map((item) => `- ${item.name}: ${item.score}`), "", "## 推荐 Skill", ...selectedSkillIds().map((id) => { const skill = skillCatalog[id]; return `- ${id}: ${skill.name}。输入：${skill.inputs.join(", ")}。输出：${skill.outputs.join(", ")}。边界：${skill.guardrails.join(", ")}。`; }), "", "## 7 天计划", ...planItems().map((item, index) => `${index + 1}. ${item.title}: ${item.action} 输出：${item.output}`), "", "## 边界", "- 不承诺 star、用户、PR、收入或曝光结果。", "- 不声称 BotLearn 官方已接受该模块。", "- 公开案例只作为方法参考，不作为增长效果证明。"].join("\n");
+      }
+      function skillPrompt(id) {
+        const skill = skillCatalog[id];
+        return [`你现在运行 BotLearn Indie Growth Doctor 的候选 Skill：${id} / ${skill.name}`, "", `项目：${$("projectName").value}`, `目标：${goalText()}`, `已有素材：${[...state.selectedAssets].map(assetTitle).join("、")}`, `背景：${$("notes").value}`, "", "请基于真实输入材料执行，不要伪造指标、用户反馈或增长结果。", `固定输入：${skill.inputs.join(", ")}`, `固定输出：${skill.outputs.join(", ")}`, `反虚构边界：${skill.guardrails.join(", ")}`, "", `今晚任务：${skill.tonight}`, "", "输出请包含：1. 使用了哪些材料；2. 生成结果；3. 不确定点；4. 下一步验证动作。"].join("\n");
+      }
+      function renderLive() {
+        const data = reportData();
+        const skills = selectedSkillIds().map((id) => skillCatalog[id].name);
+        $("totalScore").textContent = data.total;
+        $("radial").style.setProperty("--score", data.total);
+        $("liveHeadline").textContent = `优先处理：${data.primary.name}`;
+        $("liveSub").textContent = `建议先跑 ${skills.slice(0, 2).join(" + ")}。`;
+        $("liveMini").innerHTML = `<div class="decision-row"><span>项目</span><strong>${data.project}</strong></div><div class="decision-row"><span>目标</span><strong>${goalText()}</strong></div><div class="decision-row"><span>素材</span><strong>${state.selectedAssets.size} 类</strong></div><div class="decision-row"><span>输出</span><strong>报告 + Skill + 今晚测试</strong></div>`;
+        $("copyArea").value = reportMarkdown();
+      }
+      function render() {
+        renderAssets(); renderQuestions(); renderFollowups(); renderReport(); renderSkills(); renderCases(); renderTonightTests(); renderPlan(); renderLive();
+      }
+      function loadSacp() {
+        $("projectName").value = "SACP"; $("goal").value = "submit_output"; $("projectType").value = "oss"; $("secondaryGoal").value = "引导开发者 run example / open issue";
+        $("notes").value = "SACP 已有 README、CHANGELOG、ROADMAP、CONTRIBUTING、COMMUNITY_OUTREACH 和 AgentOps Doctor；它不是没完成，而是需要把“完成但效果不如意的 agent output”转成更稳定的试跑、提交样本和 open issue 路径。";
+        state.answers = [...sampleAnswers];
+        state.selectedAssets = new Set(["readme", "changelog", "roadmap", "contributing", "community_outreach", "technical_note"]);
+        render();
+      }
+      function loadTechnical() {
+        $("projectName").value = "My Protocol Library"; $("goal").value = "find_users"; $("projectType").value = "technical"; $("secondaryGoal").value = "让技术读者今晚跑最小示例";
+        $("notes").value = "项目有 README 和技术说明，但缺少 release 节奏、真实反馈提炼和统一 CTA。";
+        state.answers = [...technicalAnswers];
+        state.selectedAssets = new Set(["readme", "technical_note"]);
+        render();
+      }
+      async function copy(text) {
+        try { await navigator.clipboard.writeText(text); } catch {
+          const tmp = document.createElement("textarea"); tmp.value = text; document.body.appendChild(tmp); tmp.select(); document.execCommand("copy"); tmp.remove();
+        }
+        $("toast").classList.add("show");
+        setTimeout(() => $("toast").classList.remove("show"), 1200);
+      }
+      ["projectName", "goal", "secondaryGoal", "notes"].forEach((id) => { $(id).addEventListener("input", render); $(id).addEventListener("change", render); });
+      $("projectType").addEventListener("change", () => { state.answers = Array(currentQuestions().length).fill(1); render(); });
+      $("loadSacp").addEventListener("click", loadSacp);
+      $("loadTechnical").addEventListener("click", loadTechnical);
+      $("copyTop").addEventListener("click", () => copy(reportMarkdown()));
+      $("copyReport").addEventListener("click", () => copy(reportMarkdown()));
+      $("copyPlan").addEventListener("click", () => copy(planItems().map((item, index) => `Day ${index + 1} ${item.title}: ${item.action} 输出：${item.output}`).join("\n")));
+      $("copySkillPrompt").addEventListener("click", () => copy(skillPrompt(selectedSkillIds()[0])));
+      render();
+    </script>
+  </body>
+</html>
