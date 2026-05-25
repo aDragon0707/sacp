@@ -1,0 +1,40 @@
+protocol: SACP/0.1
+type: receipt
+method: COMPLETE
+status_code: 200
+handoff_id: corpus_033_codex_self_use_feedback
+attempt_id: attempt_001
+agent_id: Codex
+processed_at: 2026-05-25T00:00:00+08:00
+source_fingerprint: sha256:corpus-033-codex-self-use-feedback
+claims:
+  - text: "The remaining open PR clarifying CLI packaging status was merged."
+    claim_type: tool_result
+    source_id: gh_pr_merge_1
+    support_status: supported
+  - text: "CHANGELOG.md now says 'No packaged CLI distribution yet.'"
+    claim_type: tool_result
+    source_id: CHANGELOG.md
+    support_status: supported
+  - text: "python validator.py --examples --strict passed after the merge."
+    claim_type: tool_result
+    source_id: python_validator_examples_strict
+    support_status: supported
+  - text: "SACP was useful for turning a conversational completion claim into an auditable maintenance receipt."
+    claim_type: inference
+    source_id: current_codex_session
+    support_status: supported
+  - text: "A micro receipt example would make SACP easier to use for tiny low-risk maintenance tasks."
+    claim_type: inference
+    source_id: current_codex_session
+    support_status: supported
+verification:
+  status: passed
+  method: "local git, GitHub CLI, and validator checks"
+  evidence_id:
+    - gh_pr_merge_1
+    - CHANGELOG.md
+    - python_validator_examples_strict
+residual_risk: "This self-use feedback covers one maintenance workflow; it does not prove SACP is ergonomic for all small tasks."
+next_owner: ProtocolMaintainer
+human_decision_required: false
