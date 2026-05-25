@@ -10,6 +10,8 @@ SACP/0.1 keeps the core small and uses extensions for growth.
 Unknown extensions must not break a valid packet.
 Extensions must not override core fields.
 Core fields remain the source of protocol truth.
+Canonical extension keys must have one documented spelling.
+If aliases exist, they must be documented with compatibility behavior.
 ```
 
 ## Extension Location
@@ -141,4 +143,3 @@ MVP implements only:
 sacp-minimal
 sacp-evidence
 ```
-

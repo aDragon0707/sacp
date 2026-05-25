@@ -70,7 +70,11 @@ extensions:
 | `sacp.chain.checkpoint` | External runtime, trace, checkpoint, or session reference |
 | `sacp.chain.stop_rule` | Stop condition or human boundary that the next actor must preserve |
 
-The keys use `project`, `module`, and `parent_handoff` rather than `project_id`, `module_id`, and `parent_handoff_id` so extensions do not look like overrides of SACP core fields. They still carry project/module/parent-handoff identity semantics.
+The canonical keys are `project`, `module`, and `parent_handoff`.
+
+These names are intentionally short because `extensions.sacp.chain.*` already carries the namespace. They do not override SACP core fields, but they do become the canonical spelling for this profile.
+
+When discussing semantics outside the wire format, you can read them as project_id, module_id, and parent_handoff_id identity concepts. Do not add separate `_id` keys in the payload unless a future profile version explicitly declares an alias rule.
 
 ## Rules
 

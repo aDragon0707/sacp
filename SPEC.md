@@ -40,6 +40,8 @@ The canonical v0.1 format is Markdown plus YAML.
 
 Later versions may add JSON Schema, validators, CLIs, HTTP bindings, and runtime adapters, but those must not change the core meaning.
 
+Normative requirements in SACP docs should use uppercase `MUST`, `SHOULD`, and `MAY` so readers can tell protocol rules from explanatory prose.
+
 ### 2.3 State Outside The Model
 
 LLM calls are stateless. SACP packets carry the minimum state identity required for continuation:
@@ -266,6 +268,8 @@ Rules:
 - Extensions must not override core fields.
 - Core fields remain the source of protocol truth.
 - Receivers should preserve unknown extensions when practical.
+- Canonical extension keys must have one documented spelling.
+- Any alias must be documented together with its compatibility behavior.
 
 ## 15. Conformance For v0.1
 

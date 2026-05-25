@@ -1,0 +1,36 @@
+protocol: SACP/0.1
+type: receipt
+method: COMPLETE
+status_code: 200
+handoff_id: corpus_032_sacp_designer_feedback
+attempt_id: attempt_001
+agent_id: corpus_translator
+processed_at: 2026-05-24T16:50:00+08:00
+source_fingerprint: sha256:corpus-032-designer-feedback
+claims:
+  - text: "validator.py --examples --strict passes all listed examples."
+    claim_type: tool_result
+    source_id: validator.py --examples --strict
+    support_status: supported
+  - text: "done_but_no_receipt is diagnosed as 400 invalid_packet."
+    claim_type: tool_result
+    source_id: agentops-doctor-skill/examples/done_but_no_receipt.md
+    support_status: supported
+  - text: "unsupported_test_claim is diagnosed as 412 missing_evidence."
+    claim_type: tool_result
+    source_id: agentops-doctor-skill/examples/unsupported_test_claim.md
+    support_status: supported
+  - text: "The changed source_fingerprint rule should stay aligned across lifecycle, status, and dirty-case docs."
+    claim_type: inference
+    source_id: LIFECYCLE.md / STATUS_CODES.md / DIRTY_RUN_CASES.md
+    support_status: supported
+verification:
+  status: passed
+  method: "local validator, doctor checks, and docs review"
+  evidence_id:
+    - validator.py --examples --strict
+    - agentops-doctor-skill/examples/done_but_no_receipt.md
+    - agentops-doctor-skill/examples/unsupported_test_claim.md
+residual_risk: "The changed-source wording could drift again unless maintainers keep the three docs synchronized."
+next_owner: ProtocolMaintainer
+human_decision_required: false

@@ -27,7 +27,7 @@ Inspect:
 Rules:
 
 - Same `handoff_id` and same `source_fingerprint` already completed: `409 duplicate_handoff`.
-- Same `handoff_id` and changed `source_fingerprint`: treat as rework.
+- Same `handoff_id` and changed `source_fingerprint`: `202 accepted_processing` and rework.
 - New `attempt_id` under same `handoff_id`: retry, not new task.
 
 ## Step 3: Check Lease

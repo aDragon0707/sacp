@@ -63,6 +63,12 @@ Required v0.1 status codes:
 - 500 agent_error
 - 504 lease_expired
 
+Canonical changed-source rule:
+
+```text
+changed source_fingerprint -> 202 accepted_processing -> rework
+```
+
 Check these failure modes:
 - duplicate handoff
 - active lease collision
@@ -102,4 +108,3 @@ Rules:
 
 Now diagnose the pasted input.
 ```
-

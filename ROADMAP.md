@@ -35,6 +35,12 @@ Status: documentation and examples first; validator enforcement later only if di
 
 Receipt Chain is a profile for long-running, multi-module, and multi-agent work. It keeps the SACP core small by storing chain metadata in namespaced extensions rather than adding new required fields. See [SACP_RECEIPT_CHAIN.md](./SACP_RECEIPT_CHAIN.md).
 
+## Protocol Design References
+
+Status: active design guidance.
+
+SACP borrows protocol discipline from HTTP, Git, OpenTelemetry, MIME, and RFC-style normative wording. This is now the default design route for protocol wording and boundary decisions. See [PROTOCOL_DESIGN_REFERENCES.md](./PROTOCOL_DESIGN_REFERENCES.md).
+
 ## v0.2: Schemas And Stronger Validation
 
 Candidate additions:

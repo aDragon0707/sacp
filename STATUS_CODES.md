@@ -18,7 +18,7 @@ SACP status codes divide responsibility and guide retry behavior.
 | Code | Name | Meaning | Typical Fix |
 |---:|---|---|---|
 | 200 | `completed` | Work completed and valid receipt exists | Continue to `next_owner` |
-| 202 | `accepted_processing` | Work accepted or lease acquired | Wait for receipt or lease expiration |
+| 202 | `accepted_processing` | Work accepted, lease acquired, or same handoff with changed source fingerprint | Wait for receipt or lease expiration |
 | 204 | `no_action_needed` | Nothing new to process | Stop or archive |
 | 301 | `superseded_by_human_decision` | A newer human decision overrides the work | Follow the human decision |
 | 400 | `invalid_packet` | Required fields are missing or invalid | Repair packet |
@@ -63,7 +63,15 @@ Use when a handoff was accepted or a lease was created, but no completion receip
 
 Do not treat `202` as success.
 
-Also use `202` when the same `handoff_id` arrives with a changed `source_fingerprint` and valid core fields. This means changed input or rework, not duplicate completion.
+Also use `202` when the same `handoff_id` arrives with a changed `source_fingerprint` and valid core fields.
+Canonical wording:
+
+```text
+changed source_fingerprint -> 202 accepted_processing -> rework
+```
+
+This means changed input or rework, not duplicate completion.
+Do not downgrade that case to `409 duplicate_handoff` unless the same-source request was already processed.
 
 ### 204 no_action_needed
 

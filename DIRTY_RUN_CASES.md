@@ -85,11 +85,17 @@ Expected:
 status_code: 202
 status_text: accepted_processing
 verdict: rework
-diagnosis: "The input changed. This is not a simple duplicate."
-required_fix: "Create a new attempt_id and process the changed source."
+diagnosis: "The input changed. This is a rework case, not a simple duplicate."
+required_fix: "Return 202 accepted_processing for the changed source and continue with a new attempt_id if needed."
 next_owner: AssignedAgent
 human_decision_required: false
 ```
+
+Rule:
+
+- Same `handoff_id` plus changed `source_fingerprint` must not be downgraded to `409 duplicate_handoff` unless the same-source request was already processed.
+- Canonical result: `202 accepted_processing` for changed input or rework.
+- Preserve the changed source in audit history.
 
 ## Case 05: Missing Evidence
 
