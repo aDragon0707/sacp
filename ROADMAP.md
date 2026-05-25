@@ -60,6 +60,7 @@ Candidate additions:
 Candidate adapters:
 
 - Docs-only adapter note template
+- OpenClaw / Longju docs-only adapter note
 - OpenClaw / Longju state ledger
 - LangGraph checkpoint mapping
 - MCP tool-call evidence mapping

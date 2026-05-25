@@ -103,6 +103,7 @@ validator.py = 本地参考检查器
 - [PROTOCOL_EVOLUTION.md](./PROTOCOL_EVOLUTION.md)：反馈如何变成 dirty case、extension、profile 和 core candidate
 - [JSON_SCHEMA_PLAN.md](./JSON_SCHEMA_PLAN.md)：v0.2 JSON Schema 的文档计划
 - [SACP_RECEIPT_CHAIN.md](./SACP_RECEIPT_CHAIN.md)：长任务协作 profile
+- [docs/OPENCLAW_LONGJU_ADAPTER_NOTE.md](./docs/OPENCLAW_LONGJU_ADAPTER_NOTE.md)：OpenClaw / Longju 的 docs-only adapter 映射
 - [PROTOCOL_DESIGN_REFERENCES.md](./PROTOCOL_DESIGN_REFERENCES.md)：协议设计参考
 - [docs/SACP_AGENT_TEST_PROMPT.md](./docs/SACP_AGENT_TEST_PROMPT.md)：给 OpenClaw、harness 或其他 agent 的测试 prompt
 - [docs/DUAL_AGENT_TRIAL_RUNBOOK.md](./docs/DUAL_AGENT_TRIAL_RUNBOOK.md)：双 agent 试跑手册
