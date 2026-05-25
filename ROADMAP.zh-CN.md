@@ -30,6 +30,10 @@ English version: [ROADMAP.md](./ROADMAP.md)
 
 ## v0.2：Schema 和更强校验
 
+状态：先做文档计划；只有 dirty case 证明需要时，再做更强 validator enforcement。
+
+计划：[JSON_SCHEMA_PLAN.md](./JSON_SCHEMA_PLAN.md)，[中文版本](./JSON_SCHEMA_PLAN.zh-CN.md)
+
 候选新增：
 
 - Envelope 和 Receipt 的 JSON Schema
@@ -88,4 +92,3 @@ GET  /sacp/receipts/{receipt_id}
 - storage
 - model provider
 - training method
-

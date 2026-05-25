@@ -95,6 +95,8 @@ SACP borrows protocol discipline from HTTP, Git, OpenTelemetry, MIME, and RFC-st
 
 Open [sacp-demo.html](./sacp-demo.html) directly in a browser to see a static explanation of what SACP changes: raw completion claims become auditable receipts with evidence, next owner, and human decision boundaries.
 
+Open [sacp-triage-editor.html](./sacp-triage-editor.html) to triage the current project into Now / Next / Later / Cut and copy the next Codex prompt.
+
 ## Test Your Own Agent Output
 
 Save any final agent response, worklog, or handoff as a text file:
@@ -131,6 +133,7 @@ Core docs:
 - [DIRTY_RUN_CASES.md](./DIRTY_RUN_CASES.md): adversarial cases
 - [CONFORMANCE.md](./CONFORMANCE.md): conformance levels
 - [PROTOCOL_EVOLUTION.md](./PROTOCOL_EVOLUTION.md): how feedback becomes dirty cases, extensions, profiles, and core candidates
+- [JSON_SCHEMA_PLAN.md](./JSON_SCHEMA_PLAN.md): docs-only plan for v0.2 JSON Schema
 - [SACP_RECEIPT_CHAIN.md](./SACP_RECEIPT_CHAIN.md): optional profile for long-running, multi-agent work
 - [docs/ADAPTER_NOTE_TEMPLATE.md](./docs/ADAPTER_NOTE_TEMPLATE.md): docs-only mapping template for agent frameworks
 - [docs/SACP_AGENT_TEST_PROMPT.md](./docs/SACP_AGENT_TEST_PROMPT.md): prompt for OpenClaw, herness, or another agent to test SACP

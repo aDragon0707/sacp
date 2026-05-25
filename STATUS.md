@@ -16,6 +16,8 @@ SACP/0.1 is frozen for feedback.
 - Receipt Chain: optional profile documented with multi-agent and research-publish examples.
 - Protocol Design References: HTTP, Git, OpenTelemetry, MIME, and RFC-style wording are the default guidance for protocol boundaries.
 - Local static demo page: `sacp-demo.html` explains SACP's audit value without a backend.
+- Local triage editor: `sacp-triage-editor.html` turns project state into a copyable next-round Codex prompt.
+- JSON Schema plan: docs-only v0.2 route lives in `JSON_SCHEMA_PLAN.md`.
 - Community materials: issue templates, contribution guide, outreach templates, and a public-safe adoption case.
 - Outbound PR playbook for docs-only receipt examples, adapter notes, and dirty cases.
 
