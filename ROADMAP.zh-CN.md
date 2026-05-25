@@ -46,6 +46,7 @@ English version: [ROADMAP.md](./ROADMAP.md)
 
 候选适配：
 
+- OpenClaw / Longju docs-only adapter note
 - OpenClaw / Longju state ledger
 - LangGraph checkpoint mapping
 - MCP tool-call evidence mapping
