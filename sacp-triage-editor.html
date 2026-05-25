@@ -1,0 +1,818 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SACP 项目 triage 编辑器</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0d1117;
+      --panel: #141a22;
+      --panel-2: #10161d;
+      --line: #263341;
+      --ink: #eff4f6;
+      --muted: #97a6b1;
+      --now: #78dce8;
+      --next: #9ae6b4;
+      --later: #f6c177;
+      --cut: #f08f8f;
+      --accent: #b8a8ff;
+      --shadow: 0 18px 40px rgba(0, 0, 0, .28);
+      --radius: 14px;
+      --mono: "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
+      --sans: "Aptos", "Segoe UI", system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      background:
+        radial-gradient(900px 500px at 12% 10%, rgba(120, 220, 232, .10), transparent 58%),
+        radial-gradient(900px 500px at 88% 0%, rgba(184, 168, 255, .08), transparent 55%),
+        linear-gradient(180deg, #0b0f14 0%, #090c10 100%);
+      color: var(--ink);
+      font-family: var(--sans);
+    }
+
+    button, input, textarea, select { font: inherit; }
+    button { cursor: pointer; }
+
+    .wrap {
+      max-width: 1540px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 332px;
+      gap: 18px;
+      align-items: end;
+      margin-bottom: 18px;
+    }
+
+    .eyebrow {
+      color: var(--now);
+      font: 700 12px/1 var(--mono);
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(2rem, 4vw, 3.8rem);
+      line-height: .98;
+      letter-spacing: 0;
+    }
+
+    .lead {
+      margin: 0;
+      max-width: 78ch;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .meta {
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .meta-row:last-child { border-bottom: 0; }
+    .meta-row strong {
+      color: var(--ink);
+      font: 700 12px/1 var(--mono);
+      text-align: right;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      padding: 14px;
+      margin: 18px 0;
+      background: rgba(255,255,255,.03);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+    }
+
+    .toolbar input {
+      min-width: 240px;
+      flex: 1;
+      color: var(--ink);
+      background: #0d131a;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 11px 12px;
+      outline: none;
+    }
+
+    .toolbar button, .panel button, .card button {
+      color: var(--ink);
+      background: #18212a;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+    .toolbar button.primary, .panel button.primary, .card button.primary {
+      background: var(--now);
+      color: #091218;
+      border-color: transparent;
+      font-weight: 800;
+    }
+    .toolbar button.danger { color: #ffdede; border-color: rgba(240,143,143,.42); }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 398px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(220px, 1fr));
+      gap: 14px;
+      min-height: 650px;
+    }
+
+    .col {
+      min-height: 560px;
+      background: linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.022));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .col-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .col-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+    }
+
+    .dot { width: 10px; height: 10px; border-radius: 999px; background: var(--now); }
+    .next .dot { background: var(--next); }
+    .later .dot { background: var(--later); }
+    .cut .dot { background: var(--cut); }
+
+    .count {
+      color: var(--muted);
+      font: 700 12px/1 var(--mono);
+      padding: 6px 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+
+    .list {
+      min-height: 490px;
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+    }
+
+    .list.drag-over {
+      outline: 2px dashed rgba(120,220,232,.6);
+      outline-offset: -8px;
+      background: rgba(120,220,232,.04);
+    }
+
+    .card {
+      background: #111820;
+      border: 1px solid #263341;
+      border-radius: 14px;
+      padding: 12px;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, .18);
+    }
+    .card.dragging { opacity: .45; outline: 2px solid var(--now); }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: start;
+      margin-bottom: 8px;
+    }
+
+    .card h3 {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.35;
+    }
+
+    .rationale {
+      color: var(--muted);
+      margin: 6px 0 10px;
+      font-size: 13px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .chip {
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      border-radius: 999px;
+      padding: 5px 8px;
+      color: #dce8ec;
+      font: 700 11px/1 var(--mono);
+    }
+    .risk-high { color: var(--cut); }
+    .risk-med { color: var(--later); }
+    .risk-low { color: var(--next); }
+
+    .mini-actions {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin-top: 10px;
+    }
+    .mini-actions button {
+      padding: 6px 4px;
+      font: 700 11px/1 var(--mono);
+      border-radius: 9px;
+      color: var(--muted);
+    }
+
+    aside {
+      display: grid;
+      gap: 14px;
+      position: sticky;
+      top: 18px;
+    }
+
+    .panel {
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .panel h2 {
+      margin: 0 0 10px;
+      font-size: 19px;
+      line-height: 1.18;
+    }
+
+    .panel p {
+      margin: 0 0 10px;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .prompt {
+      width: 100%;
+      min-height: 350px;
+      resize: vertical;
+      color: #ecf6f8;
+      background: #0c1117;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      font: 12px/1.58 var(--mono);
+      white-space: pre;
+    }
+
+    .export {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .status {
+      min-height: 18px;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .add-form {
+      display: grid;
+      gap: 8px;
+    }
+
+    .add-form input, .add-form textarea, .add-form select {
+      width: 100%;
+      color: var(--ink);
+      background: #0d131a;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 9px 10px;
+    }
+    .add-form textarea { min-height: 84px; resize: vertical; }
+
+    .summary-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .summary-item {
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 12px;
+      background: rgba(255,255,255,.03);
+      padding: 10px 12px;
+    }
+    .summary-item strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 13px;
+    }
+    .summary-item span {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    @media (max-width: 1200px) {
+      .layout { grid-template-columns: 1fr; }
+      aside { position: static; }
+    }
+    @media (max-width: 980px) {
+      .hero { grid-template-columns: 1fr; }
+      .board { grid-template-columns: 1fr; }
+      .col { min-height: auto; }
+      .list { min-height: 220px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <div>
+        <div class="eyebrow">SACP triage editor</div>
+        <h1>把当前项目状态拖进 Now / Next / Later / Cut，再复制成下一轮 Codex prompt</h1>
+        <p class="lead">
+          这是一个离线静态页面，用来把 SACP 项目的当前状态、后续动作和边界收拢到一个地方。
+          你可以拖拽卡片、改优先级、增加任务、导出 Markdown/JSON，并一键复制可直接交给下一轮 Codex 的提示词。
+        </p>
+      </div>
+      <div class="meta">
+        <div class="meta-row"><span>工作目录</span><strong>C:\Users\86181\Documents\Codex\2026-05-07\openclaw-llm\sacp</strong></div>
+        <div class="meta-row"><span>当前分支</span><strong>docs/protocol-evolution-release-notes</strong></div>
+        <div class="meta-row"><span>协议状态</span><strong>SACP/0.1 frozen for feedback</strong></div>
+        <div class="meta-row"><span>页面性质</span><strong>本地静态 HTML</strong></div>
+      </div>
+    </section>
+
+    <section class="toolbar">
+      <input id="filter" type="search" placeholder="按标题、理由或标签过滤卡片">
+      <button id="selectPrompt" class="primary">选中提示词</button>
+      <button id="resetBoard" class="danger">重置看板</button>
+      <button id="copyPromptTop" class="primary">复制 Codex prompt</button>
+    </section>
+
+    <section class="layout">
+      <section class="board" aria-label="SACP triage board">
+        <section class="col now" data-bucket="now">
+          <div class="col-head"><div class="col-title"><span class="dot"></span>Now</div><span class="count" id="count-now">0</span></div>
+          <div class="list" data-list="now"></div>
+        </section>
+        <section class="col next" data-bucket="next">
+          <div class="col-head"><div class="col-title"><span class="dot"></span>Next</div><span class="count" id="count-next">0</span></div>
+          <div class="list" data-list="next"></div>
+        </section>
+        <section class="col later" data-bucket="later">
+          <div class="col-head"><div class="col-title"><span class="dot"></span>Later</div><span class="count" id="count-later">0</span></div>
+          <div class="list" data-list="later"></div>
+        </section>
+        <section class="col cut" data-bucket="cut">
+          <div class="col-head"><div class="col-title"><span class="dot"></span>Cut</div><span class="count" id="count-cut">0</span></div>
+          <div class="list" data-list="cut"></div>
+        </section>
+      </section>
+
+      <aside>
+        <section class="panel">
+          <h2>下一轮 Codex prompt</h2>
+          <p>这是按当前 triage 自动生成的执行指令。可以直接复制给 Codex 或其他 agent。</p>
+          <textarea id="prompt" class="prompt" spellcheck="false"></textarea>
+          <div class="export">
+            <button id="copyPrompt" class="primary">复制 prompt</button>
+            <button id="copyMarkdown">复制 Markdown</button>
+            <button id="copyJson">复制 JSON</button>
+            <button id="downloadJson">下载 JSON</button>
+          </div>
+          <div id="status" class="status"></div>
+        </section>
+
+        <section class="panel">
+          <h2>项目介绍与总结</h2>
+          <div class="summary-grid">
+            <div class="summary-item">
+              <strong>SACP 做什么</strong>
+              <span>把长周期、多模块、多 agent 协作中的 claims、evidence、ownership、next_owner 和 human_decision_required 变成可审计状态。</span>
+            </div>
+            <div class="summary-item">
+              <strong>SACP 不做什么</strong>
+              <span>不做 runtime、scheduler、database、hosted service，也不声称保证底层工作正确。</span>
+            </div>
+            <div class="summary-item">
+              <strong>当前推进方式</strong>
+              <span>文档先行，示例和 dirty case 紧跟，必要时再把字段和校验收紧进 profile。</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>新增卡片</h2>
+          <div class="add-form">
+            <input id="newTitle" placeholder="卡片标题">
+            <textarea id="newRationale" placeholder="理由 / 下一步要做什么"></textarea>
+            <select id="newBucket">
+              <option value="now">Now</option>
+              <option value="next">Next</option>
+              <option value="later">Later</option>
+              <option value="cut">Cut</option>
+            </select>
+            <button id="addCard" class="primary">添加卡片</button>
+          </div>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const STORAGE_KEY = "sacp-triage-editor-v2";
+    const INITIAL_ITEMS = [
+      {
+        id: "merge-pr2",
+        bucket: "now",
+        title: "检查并合并 PR #2",
+        rationale: "docs/protocol-evolution-release-notes 分支已经同步了中英 README、协议设计参考、Receipt Chain 文案、演示 HTML 以及 PRODUCT/DESIGN 上下文。继续扩大协议前，先审查并合并。",
+        tags: ["github", "发布", "文档"],
+        risk: "med"
+      },
+      {
+        id: "fix-demo-visibility",
+        bucket: "now",
+        title: "让演示页稳定可见",
+        rationale: "in-app browser 之前没有稳定渲染页面。先保留纯静态文件，确认 file:// 和 localhost 都能打开后，再考虑放 README 链接或 GitHub Pages。",
+        tags: ["html", "演示", "体验"],
+        risk: "med"
+      },
+      {
+        id: "sync-status",
+        bucket: "now",
+        title: "更新 STATUS.md 的当前状态",
+        rationale: "STATUS.md 仍停在旧日期和旧样本数，但现在已经有新的 review notes、协议文档和本地演示页，需要同步，但不要夸大采用情况。",
+        tags: ["状态", "文档"],
+        risk: "low"
+      },
+      {
+        id: "receipt-chain-canonical",
+        bucket: "now",
+        title: "锁定 Receipt Chain 规范字段名",
+        rationale: "在 extensions.sacp.chain.* 下保持 project / module / parent_handoff 为 canonical key。不要新增 _id alias，除非未来 profile 明确定义兼容规则。",
+        tags: ["协议", "命名"],
+        risk: "high"
+      },
+      {
+        id: "dirty-case-changed-source",
+        bucket: "next",
+        title: "新增 changed-source 回归样例",
+        rationale: "changed source_fingerprint -> 202 accepted_processing -> rework 已写进文档。下一步加一个小 YAML 示例或 dirty case，防止以后措辞漂移。",
+        tags: ["dirty-case", "校验"],
+        risk: "med"
+      },
+      {
+        id: "json-schema-v02",
+        bucket: "next",
+        title: "起草 v0.2 JSON Schema 计划",
+        rationale: "Roadmap 里 v0.2 包含 schema 和更强校验。先写 docs-only schema 计划，不急着做强 enforcement。",
+        tags: ["v0.2", "schema"],
+        risk: "med"
+      },
+      {
+        id: "agent-test-runbook",
+        bucket: "next",
+        title: "运行 OpenClaw / harness 双 agent 试跑",
+        rationale: "用 docs/SACP_AGENT_TEST_PROMPT.md 和 docs/DUAL_AGENT_TRIAL_RUNBOOK.md 收集两个 agent 的真实反馈，并转写成 receipts。",
+        tags: ["试跑", "agents", "corpus"],
+        risk: "low"
+      },
+      {
+        id: "adapter-note-first",
+        bucket: "next",
+        title: "写第一份外部 adapter note",
+        rationale: "用 docs/ADAPTER_NOTE_TEMPLATE.md 给一个框架写映射，优先 OpenClaw / Longju 或 LangGraph，但不要声称已有 runtime support。",
+        tags: ["adapter", "文档"],
+        risk: "med"
+      },
+      {
+        id: "github-pages-demo",
+        bucket: "later",
+        title: "用 GitHub Pages 发布演示页",
+        rationale: "静态页稳定后适合传播。但在本地渲染问题确认前，不急着发布。",
+        tags: ["演示", "传播"],
+        risk: "low"
+      },
+      {
+        id: "pip-package",
+        bucket: "later",
+        title: "打包 AgentOps Doctor / validator",
+        rationale: "STATUS 里还没有 pip package。打包有价值，但当前 docs 和外部 dirty cases 更重要。",
+        tags: ["打包", "cli"],
+        risk: "med"
+      },
+      {
+        id: "http-binding",
+        bucket: "later",
+        title: "探索 HTTP binding",
+        rationale: "Roadmap v0.4 列了可能的 endpoint。先放 Later，因为 SACP 应该先借鉴 HTTP 语义，而不是过早绑定传输层。",
+        tags: ["http", "传输"],
+        risk: "high"
+      },
+      {
+        id: "hosted-service",
+        bucket: "cut",
+        title: "Hosted SACP service",
+        rationale: "当前明确不是目标。标准稳定前做托管服务，会把协议过早变成产品。",
+        tags: ["非目标", "runtime"],
+        risk: "high"
+      },
+      {
+        id: "runtime-scheduler",
+        bucket: "cut",
+        title: "Runtime scheduler / database layer",
+        rationale: "Receipt Chain 不是 runtime、scheduler、database 或 trace system。不要把这些加进 core。",
+        tags: ["非目标", "核心边界"],
+        risk: "high"
+      },
+      {
+        id: "correctness-guarantee",
+        bucket: "cut",
+        title: "声称 SACP 保证正确性",
+        rationale: "SACP 审计 claims、evidence、ownership 和 decision boundaries。它不证明底层工作一定正确。",
+        tags: ["表达", "边界"],
+        risk: "high"
+      }
+    ];
+
+    const bucketOrder = ["now", "next", "later", "cut"];
+    const labels = { now: "Now", next: "Next", later: "Later", cut: "Cut" };
+    const bucketStyles = { now: "risk-low", next: "risk-low", later: "risk-med", cut: "risk-high" };
+    const lists = [...document.querySelectorAll("[data-list]")];
+    const filter = document.getElementById("filter");
+    const promptBox = document.getElementById("prompt");
+    const statusEl = document.getElementById("status");
+    let draggedId = null;
+    let items = loadItems();
+
+    function loadItems() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) return JSON.parse(raw);
+      } catch {}
+      return structuredClone(INITIAL_ITEMS);
+    }
+
+    function save() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    }
+
+    function filteredItems(bucket) {
+      const query = filter.value.trim().toLowerCase();
+      return items.filter(item => item.bucket === bucket).filter(item => {
+        if (!query) return true;
+        return [item.title, item.rationale, ...(item.tags || [])].join(" ").toLowerCase().includes(query);
+      });
+    }
+
+    function countItems(bucket) {
+      return items.filter(item => item.bucket === bucket).length;
+    }
+
+    function render() {
+      for (const list of lists) {
+        const bucket = list.dataset.list;
+        list.innerHTML = "";
+        for (const item of filteredItems(bucket)) {
+          list.appendChild(renderCard(item));
+        }
+        document.getElementById(`count-${bucket}`).textContent = String(countItems(bucket));
+      }
+      promptBox.value = buildPrompt();
+      save();
+    }
+
+    function renderCard(item) {
+      const card = document.createElement("article");
+      card.className = "card";
+      card.dataset.id = item.id;
+      card.draggable = true;
+      card.innerHTML = `
+        <div class="card-top">
+          <h3>${escapeHtml(item.title)}</h3>
+          <span class="chip ${bucketStyles[item.bucket] || "risk-low"}">${(item.risk || "low").toUpperCase()}</span>
+        </div>
+        <div class="rationale">${escapeHtml(item.rationale)}</div>
+        <div class="chips">${(item.tags || []).map(tag => `<span class="chip">${escapeHtml(tag)}</span>`).join("")}</div>
+        <div class="mini-actions">
+          <button data-move="now">Now</button>
+          <button data-move="next">Next</button>
+          <button data-move="later">Later</button>
+          <button data-move="cut">Cut</button>
+        </div>
+      `;
+
+      card.addEventListener("dragstart", event => {
+        draggedId = item.id;
+        card.classList.add("dragging");
+        event.dataTransfer.effectAllowed = "move";
+      });
+      card.addEventListener("dragend", () => {
+        draggedId = null;
+        card.classList.remove("dragging");
+      });
+      card.querySelectorAll("[data-move]").forEach(button => {
+        button.addEventListener("click", () => moveItem(item.id, button.dataset.move));
+      });
+      return card;
+    }
+
+    function moveItem(id, bucket) {
+      const item = items.find(entry => entry.id === id);
+      if (!item) return;
+      item.bucket = bucket;
+      render();
+    }
+
+    for (const list of lists) {
+      list.addEventListener("dragover", event => {
+        event.preventDefault();
+        list.classList.add("drag-over");
+      });
+      list.addEventListener("dragleave", () => {
+        list.classList.remove("drag-over");
+      });
+      list.addEventListener("drop", event => {
+        event.preventDefault();
+        list.classList.remove("drag-over");
+        if (!draggedId) return;
+        moveItem(draggedId, list.dataset.list);
+      });
+    }
+
+    function buildMarkdown() {
+      return bucketOrder.map(bucket => {
+        const body = items.filter(item => item.bucket === bucket).map(item => {
+          const tags = (item.tags || []).length ? ` [${item.tags.join(", ")}]` : "";
+          return `- ${item.title}${tags}\n  - 理由: ${item.rationale}`;
+        }).join("\n");
+        return `## ${labels[bucket]}\n${body || "- 无"}`;
+      }).join("\n\n");
+    }
+
+    function buildPrompt() {
+      return `你是 Codex，当前任务是继续推进 SACP 开源协议项目。
+
+工作目录：C:\\Users\\86181\\Documents\\Codex\\2026-05-07\\openclaw-llm\\sacp
+当前分支：docs/protocol-evolution-release-notes
+当前状态：SACP/0.1 frozen for feedback；Receipt Chain、Protocol Design References、中英 README、demo HTML 已同步到分支。
+
+执行优先级如下：
+
+## Now
+${buildMarkdownSection("now")}
+
+## Next
+${buildMarkdownSection("next")}
+
+## Later
+${buildMarkdownSection("later")}
+
+## Cut
+${buildMarkdownSection("cut")}
+
+执行规则：
+- 先处理 Now，不要跳到 Later。
+- 保持 SACP core 小，不新增 runtime、scheduler、database、hosted service。
+- 新字段优先进入 extensions/profile，不直接进 core。
+- 不要声称 SACP 保证正确性，只说它让 claims、evidence、next_owner、human_decision_required 可审计。
+- 每个改动后运行：python validator.py --examples --strict
+- 如果需要 push，先检查 git diff 和 git status，避免带入无关改动。
+
+请从 Now 的第一项开始执行，并在完成后给出验证结果。`;
+    }
+
+    function buildMarkdownSection(bucket) {
+      const body = items.filter(item => item.bucket === bucket).map(item => {
+        const tags = (item.tags || []).length ? ` [${item.tags.join(", ")}]` : "";
+        return `- ${item.title}${tags}\n  - 理由: ${item.rationale}`;
+      }).join("\n");
+      return body || "- 无";
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    async function copyText(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+        setStatus("已复制到剪贴板");
+      } catch {
+        promptBox.value = text;
+        promptBox.focus();
+        promptBox.select();
+        document.execCommand("copy");
+        setStatus("已通过文本框兜底复制");
+      }
+    }
+
+    function setStatus(text) {
+      statusEl.textContent = text;
+      window.clearTimeout(setStatus._timer);
+      setStatus._timer = window.setTimeout(() => {
+        statusEl.textContent = "";
+      }, 1600);
+    }
+
+    document.getElementById("copyPrompt").addEventListener("click", () => copyText(buildPrompt()));
+    document.getElementById("copyPromptTop").addEventListener("click", () => copyText(buildPrompt()));
+    document.getElementById("copyMarkdown").addEventListener("click", () => copyText(buildMarkdown()));
+    document.getElementById("copyJson").addEventListener("click", () => copyText(JSON.stringify(items, null, 2)));
+    document.getElementById("downloadJson").addEventListener("click", () => {
+      const blob = new Blob([JSON.stringify(items, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "sacp-triage.json";
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 0);
+      setStatus("JSON 已下载");
+    });
+    document.getElementById("resetBoard").addEventListener("click", () => {
+      if (!confirm("要把看板重置回预置的 SACP 当前状态吗？")) return;
+      items = structuredClone(INITIAL_ITEMS);
+      render();
+      setStatus("看板已重置");
+    });
+    document.getElementById("addCard").addEventListener("click", () => {
+      const title = document.getElementById("newTitle").value.trim();
+      const rationale = document.getElementById("newRationale").value.trim();
+      const bucket = document.getElementById("newBucket").value;
+      if (!title || !rationale) return;
+      items.push({
+        id: `custom-${Date.now()}`,
+        bucket,
+        title,
+        rationale,
+        tags: ["custom"],
+        risk: "low"
+      });
+      document.getElementById("newTitle").value = "";
+      document.getElementById("newRationale").value = "";
+      render();
+      setStatus("已添加卡片");
+    });
+    document.getElementById("selectPrompt").addEventListener("click", () => {
+      promptBox.focus();
+      promptBox.select();
+      setStatus("已选中 prompt");
+    });
+    filter.addEventListener("input", render);
+
+    render();
+  </script>
+</body>
+</html>

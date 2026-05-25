@@ -43,6 +43,10 @@ SACP borrows protocol discipline from HTTP, Git, OpenTelemetry, MIME, and RFC-st
 
 ## v0.2: Schemas And Stronger Validation
 
+Status: docs-only plan first; validator enforcement later only if dirty cases prove the need.
+
+Plan: [JSON_SCHEMA_PLAN.md](./JSON_SCHEMA_PLAN.md), [Chinese version](./JSON_SCHEMA_PLAN.zh-CN.md)
+
 Candidate additions:
 
 - JSON Schema for envelope and receipt

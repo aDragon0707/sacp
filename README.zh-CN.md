@@ -65,6 +65,8 @@ SACP 借鉴 HTTP、Git、OpenTelemetry、MIME 和 RFC 风格的规范性语言�
 
 直接用浏览器打开 [sacp-demo.html](./sacp-demo.html)，可以看到 SACP 的作用：把原始完成声明变成带有证据、下一棒和人类决策边界的可审计回执。
 
+也可以打开 [sacp-triage-editor.html](./sacp-triage-editor.html)，把当前 SACP 项目状态分到 Now / Next / Later / Cut，并复制下一轮 Codex prompt。
+
 ## 用你自己的 agent 输出测试
 
 把任意 agent 的最终回复、worklog 或 handoff 保存成一个文本文件：
@@ -99,6 +101,7 @@ validator.py = 本地参考检查器
 - [STATUS_CODES.md](./STATUS_CODES.md)：状态码
 - [DIRTY_RUN_CASES.md](./DIRTY_RUN_CASES.md)：脏场景
 - [PROTOCOL_EVOLUTION.md](./PROTOCOL_EVOLUTION.md)：反馈如何变成 dirty case、extension、profile 和 core candidate
+- [JSON_SCHEMA_PLAN.md](./JSON_SCHEMA_PLAN.md)：v0.2 JSON Schema 的文档计划
 - [SACP_RECEIPT_CHAIN.md](./SACP_RECEIPT_CHAIN.md)：长任务协作 profile
 - [PROTOCOL_DESIGN_REFERENCES.md](./PROTOCOL_DESIGN_REFERENCES.md)：协议设计参考
 - [docs/SACP_AGENT_TEST_PROMPT.md](./docs/SACP_AGENT_TEST_PROMPT.md)：给 OpenClaw、harness 或其他 agent 的测试 prompt
