@@ -91,6 +91,10 @@ Read: [SACP_RECEIPT_CHAIN.md](./SACP_RECEIPT_CHAIN.md), [Chinese version](./SACP
 
 SACP borrows protocol discipline from HTTP, Git, OpenTelemetry, MIME, and RFC-style normative wording, but stays a small audit protocol. See [PROTOCOL_DESIGN_REFERENCES.md](./PROTOCOL_DESIGN_REFERENCES.md).
 
+## Local Demo Page
+
+Open [sacp-demo.html](./sacp-demo.html) directly in a browser to see a static explanation of what SACP changes: raw completion claims become auditable receipts with evidence, next owner, and human decision boundaries.
+
 ## Test Your Own Agent Output
 
 Save any final agent response, worklog, or handoff as a text file:

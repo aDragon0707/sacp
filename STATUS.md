@@ -1,6 +1,6 @@
 # Current Status
 
-Date: 2026-05-17
+Date: 2026-05-25
 
 SACP/0.1 is frozen for feedback.
 
@@ -8,10 +8,14 @@ SACP/0.1 is frozen for feedback.
 
 - SACP/0.1 text-first spec, envelope, receipt, status codes, lifecycle, validator, conformance notes, and Dirty Run cases.
 - Dirty Run benchmark: 10 spec cases for state, evidence, memory, lease, completion, and next-owner discipline.
-- Sample corpus: 30 messy real outputs translated into SACP receipts.
+- Sample corpus: 32 messy or review outputs translated into SACP receipts.
   - Batch 001: 10 real workflow/worklog excerpts.
   - Batch 002: 20 natural dirty outputs from DeepSeek, Qwen, GLM, and Kimi across 5 dirty tasks.
+  - Review notes 031 and 032: local protocol review and designer feedback receipts.
 - AgentOps Doctor: local reference skill / CLI works from source.
+- Receipt Chain: optional profile documented with multi-agent and research-publish examples.
+- Protocol Design References: HTTP, Git, OpenTelemetry, MIME, and RFC-style wording are the default guidance for protocol boundaries.
+- Local static demo page: `sacp-demo.html` explains SACP's audit value without a backend.
 - Community materials: issue templates, contribution guide, outreach templates, and a public-safe adoption case.
 - Outbound PR playbook for docs-only receipt examples, adapter notes, and dirty cases.
 

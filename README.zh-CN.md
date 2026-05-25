@@ -61,6 +61,10 @@ Receipt Chain 是 SACP 面向长周期、多模块、多 agent 协作的可选 p
 
 SACP 借鉴 HTTP、Git、OpenTelemetry、MIME 和 RFC 风格的规范性语言，但仍保持为一个小型审计协议。参见 [PROTOCOL_DESIGN_REFERENCES.md](./PROTOCOL_DESIGN_REFERENCES.md)。
 
+## 本地演示页
+
+直接用浏览器打开 [sacp-demo.html](./sacp-demo.html)，可以看到 SACP 的作用：把原始完成声明变成带有证据、下一棒和人类决策边界的可审计回执。
+
 ## 用你自己的 agent 输出测试
 
 把任意 agent 的最终回复、worklog 或 handoff 保存成一个文本文件：
