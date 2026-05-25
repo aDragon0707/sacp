@@ -105,8 +105,9 @@ validator.py = 本地参考检查器
 - [SACP_RECEIPT_CHAIN.md](./SACP_RECEIPT_CHAIN.md)：长任务协作 profile
 - [docs/OPENCLAW_LONGJU_ADAPTER_NOTE.md](./docs/OPENCLAW_LONGJU_ADAPTER_NOTE.md)：OpenClaw / Longju 的 docs-only adapter 映射
 - [PROTOCOL_DESIGN_REFERENCES.md](./PROTOCOL_DESIGN_REFERENCES.md)：协议设计参考
-- [docs/SACP_AGENT_TEST_PROMPT.md](./docs/SACP_AGENT_TEST_PROMPT.md)：给 OpenClaw、harness 或其他 agent 的测试 prompt
+- [docs/SACP_AGENT_TEST_PROMPT.md](./docs/SACP_AGENT_TEST_PROMPT.md)：给 OpenClaw、herness 或其他 agent 的测试 prompt
 - [docs/DUAL_AGENT_TRIAL_RUNBOOK.md](./docs/DUAL_AGENT_TRIAL_RUNBOOK.md)：双 agent 试跑手册
+- [docs/DUAL_AGENT_TRIAL_RESULT_TEMPLATE.md](./docs/DUAL_AGENT_TRIAL_RESULT_TEMPLATE.md)：OpenClaw / herness 报告对比和 coordinator receipt 模板
 - [agentops-doctor-skill/](./agentops-doctor-skill)：一条命令的参考工具
 - [examples/](./examples)：合法和脏样例
 - [sample-corpus/](./sample-corpus)：转写成 SACP receipt 的 messy output 样本

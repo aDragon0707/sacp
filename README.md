@@ -139,6 +139,7 @@ Core docs:
 - [docs/ADAPTER_NOTE_TEMPLATE.md](./docs/ADAPTER_NOTE_TEMPLATE.md): docs-only mapping template for agent frameworks
 - [docs/SACP_AGENT_TEST_PROMPT.md](./docs/SACP_AGENT_TEST_PROMPT.md): prompt for OpenClaw, herness, or another agent to test SACP
 - [docs/DUAL_AGENT_TRIAL_RUNBOOK.md](./docs/DUAL_AGENT_TRIAL_RUNBOOK.md): two-agent trial workflow and result table
+- [docs/DUAL_AGENT_TRIAL_RESULT_TEMPLATE.md](./docs/DUAL_AGENT_TRIAL_RESULT_TEMPLATE.md): coordinator template for comparing OpenClaw and herness reports
 - [agentops-doctor-skill/](./agentops-doctor-skill): one-command reference tool
 - [examples/](./examples): valid and dirty packets
 - [sample-corpus/](./sample-corpus): messy outputs translated into SACP receipts

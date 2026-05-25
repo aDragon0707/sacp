@@ -71,6 +71,8 @@ examples/receipt_chain_research_publish.yaml
 
 Save each returned report as a local note or paste it into the coordinator thread.
 
+Use [DUAL_AGENT_TRIAL_RESULT_TEMPLATE.md](./DUAL_AGENT_TRIAL_RESULT_TEMPLATE.md) to compare the two reports and write the coordinator receipt.
+
 Suggested filenames:
 
 ```text
