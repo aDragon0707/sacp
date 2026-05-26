@@ -76,6 +76,62 @@ These names are intentionally short because `extensions.sacp.chain.*` already ca
 
 When discussing semantics outside the wire format, you can read them as project_id, module_id, and parent_handoff_id identity concepts. Do not add separate `_id` keys in the payload unless a future profile version explicitly declares an alias rule.
 
+## Role And State Clarity
+
+Receipt Chain works best when the next actor can tell which state is current, which state was verified, and who is allowed to review it.
+
+In long-running work, one word like `latest_stable_commit` can become overloaded:
+
+```text
+current Git HEAD        -> what the workspace currently contains
+verified content commit -> last commit whose product/content changes were reviewed
+verified state commit   -> last commit whose handoff/status documents were reviewed
+```
+
+If all three are called "latest stable", the next agent receives three batons and has to guess which one is the race baton. This is especially risky when a coordinator, worker, and external reviewer all touch the same project.
+
+Receipt Chain does not require Git. When Git or another versioned store is used, prefer explicit labels under `extensions` instead of overloading one status field:
+
+```yaml
+extensions:
+  sacp.chain.profile: sacp-chain
+  sacp.chain.project: botlearn_content_module
+  sacp.chain.module: handoff_state
+  sacp.chain.current_head: a49c24c
+  sacp.chain.latest_verified_content_commit: b19a081
+  sacp.chain.latest_verified_state_commit: ce58d66
+  sacp.chain.review_authority: external_reviewer_required
+  sacp.chain.stop_rule: "Do not treat coordinator self-review as the formal external review."
+```
+
+These keys are examples, not SACP/0.1 core requirements. They show a safe pattern:
+
+- separate current state from verified state
+- separate content verification from handoff/state verification
+- name the review authority when self-review would be misleading
+- keep the stop rule visible for the next actor
+
+Bad handoff wording:
+
+```yaml
+latest_stable_commit: a49c24c
+next_owner: Reviewer
+```
+
+This is ambiguous because it does not say whether `a49c24c` is current, content-reviewed, state-reviewed, or only ready for review.
+
+Better handoff wording:
+
+```yaml
+current_head: a49c24c
+latest_verified_content_commit: b19a081
+latest_verified_state_commit: ce58d66
+next_owner: ExternalReviewer
+stop_rule: "Coordinator-local checks are preflight only; formal review must come from an independent reviewer."
+```
+
+This is longer, but it prevents a local coordinator from accidentally treating its own preflight as the formal review.
+
 ## Rules
 
 1. Receipt Chain does not change the meaning of `handoff_id`.
