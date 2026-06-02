@@ -159,6 +159,74 @@ required_fix: 附上测试输出，降级不支持的声明，并要求人类批
 
 这就是 SACP 的用途：不是让模型更聪明，而是让 agent 的工作状态、证据、责任边界更清楚。
 
+## 任务合同例子：静态网页
+
+SACP 不只用于事后审计，也可以用于 agent 开工前的任务合同。
+
+例如，一个宽泛需求是：
+
+```text
+帮我从 0 写一个静态网页，主题是 Prompt Compiler Lab。
+页面要能把混乱想法整理成 GPT/Claude prompt，有输入输出、评分、检查清单，移动端也能看。
+```
+
+一个收敛后的 SACP 任务合同可以只锁定关键边界：
+
+```yaml
+sacp_version: 0.1
+tier: standard
+task_type: static_web_artifact
+objective: 创建一个单文件静态网页工具 Prompt Compiler Lab
+input_boundaries:
+  allowed_scope:
+    - plain HTML/CSS/JavaScript
+    - browser-only local behavior
+  do_not:
+    - backend
+    - API key
+    - external model call
+    - package install
+output_contract:
+  files:
+    - index.html
+  requirements:
+    - first screen is the usable tool
+    - messy idea input
+    - compiled prompt output
+    - visible quality score
+    - prompt checklist
+    - desktop and mobile readability
+validator:
+  - index.html exists
+  - required visible sections are present
+  - local JavaScript updates output from input
+  - no backend, API key, package install, or external GPT/Claude call is required
+  - desktop and mobile layout have no obvious overflow
+repair_policy: If validation fails, repair only index.html and re-check the missing requirement.
+autonomy_budget:
+  allowed:
+    - copy, clear, sample, tighten, add detail, restrained visual polish
+  limit:
+    - do not expand into backend, auth, routing, storage, or real API calls
+```
+
+这个例子的重点不是让 prompt 更长，而是把“什么算做完、什么不能做、失败怎么修、哪里允许 agent 自主发挥”说清楚。
+
+在一次本地试跑中，这种 SACP 任务合同产出了一个纯 HTML/CSS/JavaScript 的单文件工具页，并通过了桌面/移动端无横向溢出、输入生成输出、评分、checklist、copy、clear 等检查。
+
+安全说法：
+
+```text
+SACP 可以帮助把宽泛任务变成可执行、可验收、可修复的任务合同。
+```
+
+不安全说法：
+
+```text
+SACP 总是比默认 agent 更强。
+所有网页任务都应该强制包含 Prompt IR / GPT version / Claude version / redaction。
+```
+
 ## 什么时候用
 
 - 你在做 agent skill，想检查输出是否可接受。
