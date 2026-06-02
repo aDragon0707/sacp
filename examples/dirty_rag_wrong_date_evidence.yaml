@@ -1,0 +1,31 @@
+case_id: dirty_rag_wrong_date_evidence
+description: "A RAG answer uses related subscriber evidence from the wrong date as if it answered an exact-date question."
+incoming_receipt:
+  protocol: SACP/0.1
+  type: receipt
+  method: COMPLETE
+  status_code: 200
+  handoff_id: hf_matterport_exact_date_001
+  attempt_id: attempt_001
+  agent_id: RetrievalAgent
+  claims:
+    - text: "Matterport had over 701,000 subscribers on May 31, 2020."
+      claim_type: retrieved_fact
+      source_id: matterport_2022_subscriber_excerpt
+      support_status: supported
+    - text: "The cited source says Matterport had over 701,000 subscribers as of December 31, 2022."
+      claim_type: retrieved_fact
+      source_id: matterport_2022_subscriber_excerpt
+      support_status: supported
+  verification:
+    status: passed
+    method: "RAG answer self review"
+  next_owner: Human
+  human_decision_required: false
+expected_result:
+  status_code: 412
+  status_text: missing_evidence
+  verdict: revise
+  required_fix: "Do not use related-but-wrong-date evidence as exact support; find evidence for May 31, 2020 or downgrade the answer to insufficient_evidence."
+  next_owner: RetrievalReviewer
+  human_decision_required: false
