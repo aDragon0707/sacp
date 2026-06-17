@@ -97,7 +97,7 @@ validator.py = 本地参考检查器
 
 - [SPEC.md](./SPEC.md)：协议语义
 - [ENVELOPE.md](./ENVELOPE.md)：Envelope 字段和示例
-- [RECEIPT.md](./RECEIPT.md)：Receipt 字段和示例
+- [RECEIPT.md](./RECEIPT.md)：Receipt 字段、micro receipt 指南和示例
 - [STATUS_CODES.md](./STATUS_CODES.md)：状态码
 - [DIRTY_RUN_CASES.md](./DIRTY_RUN_CASES.md)：脏场景
 - [PROTOCOL_EVOLUTION.md](./PROTOCOL_EVOLUTION.md)：反馈如何变成 dirty case、extension、profile 和 core candidate

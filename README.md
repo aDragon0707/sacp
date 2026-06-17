@@ -128,7 +128,7 @@ Core docs:
 - [STATUS.md](./STATUS.md): current project status and community ask
 - [SPEC.md](./SPEC.md): protocol semantics
 - [ENVELOPE.md](./ENVELOPE.md): envelope fields and examples
-- [RECEIPT.md](./RECEIPT.md): receipt fields and examples
+- [RECEIPT.md](./RECEIPT.md): receipt fields, micro receipt guidance, and examples
 - [STATUS_CODES.md](./STATUS_CODES.md): status codes
 - [DIRTY_RUN_CASES.md](./DIRTY_RUN_CASES.md): adversarial cases
 - [CONFORMANCE.md](./CONFORMANCE.md): conformance levels
