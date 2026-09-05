@@ -26,6 +26,22 @@ Modern agent failures often happen before the final answer:
 
 SACP turns these failures into auditable work records. The protocol is intentionally small: Markdown/YAML packets, local validators, dirty-run cases, and example receipts that can be inspected by humans and tools.
 
+## The Core Loop
+
+```mermaid
+flowchart LR
+    A[Agent claim: done] --> B{Evidence attached?}
+    B -- No --> C[Missing evidence]
+    B -- Yes --> D[AgentOps Doctor / validator]
+    D --> E{Approval boundary?}
+    E -- Yes --> F[Human or trusted-system decision]
+    E -- No --> G[Derive receipt]
+    F --> G
+    G --> H[Next owner and required fix]
+```
+
+SACP does not decide whether the underlying task is true by itself. It makes the claim, evidence, approval boundary, current status, and next owner visible enough for a human or trusted system to check.
+
 ## Why OpenAI Models And Codex Matter
 
 SACP is model-agnostic, but OpenAI models and Codex are a natural testbed because coding agents already perform long-horizon work: reading files, editing code, running tests, delegating subtasks, and reporting completion. API credits would be used to turn this repo into a stronger open-source evaluation harness:
@@ -76,6 +92,16 @@ Validate protocol examples:
 ```bash
 python validator.py --examples --strict
 ```
+
+## Try It With Your Own Agent Output
+
+The fastest useful experiment is to save one real final answer, worklog, or handoff and run AgentOps Doctor on it:
+
+```bash
+python agentops-doctor-skill/agentops_doctor.py path/to/your-agent-output.md
+```
+
+Then open a GitHub issue with a sanitized copy if the diagnosis is wrong, incomplete, or catches a useful failure. Do not include secrets, customer data, private paths, or proprietary logs. The goal is one concrete failure case, not a star request.
 
 Read the public-safe adoption case:
 
@@ -218,6 +244,8 @@ Open an issue using the templates in this repo.
 See [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 If you want to share the project with developer communities, see [COMMUNITY_OUTREACH.md](./COMMUNITY_OUTREACH.md).
+
+For a staged, consent-aware outreach process, see [OUTREACH_1000_PLAN.md](./OUTREACH_1000_PLAN.md). It tracks public projects and community contacts by use case and feedback state; it is not a list of scraped personal email addresses.
 
 ## Boundary
 

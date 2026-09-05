@@ -159,6 +159,32 @@ required_fix: 附上测试输出，降级不支持的声明，并要求人类批
 
 这就是 SACP 的用途：不是让模型更聪明，而是让 agent 的工作状态、证据、责任边界更清楚。
 
+## 核心流程
+
+```mermaid
+flowchart LR
+    A[Agent 声称完成] --> B{有没有证据？}
+    B -- 没有 --> C[缺少证据]
+    B -- 有 --> D[AgentOps Doctor / validator]
+    D --> E{是否跨过授权边界？}
+    E -- 是 --> F[人类或可信系统决策]
+    E -- 否 --> G[派生 receipt]
+    F --> G
+    G --> H[下一位 owner 和修复动作]
+```
+
+SACP 不会凭空证明底层任务一定为真。它把 claim、evidence、审批边界、当前状态和下一位 owner 记录清楚，让人或可信系统可以继续核验。
+
+## 用你自己的 Agent 输出试一次
+
+最快的有效试验是把一次真实的 agent 回复、worklog 或 handoff 保存下来，然后运行：
+
+```bash
+python agentops-doctor-skill/agentops_doctor.py path/to/your-agent-output.md --lang zh
+```
+
+如果诊断不准确、漏掉了问题，或者发现了一个值得加入 benchmark 的失败模式，请先脱敏，再提交 GitHub issue。不要放入密钥、客户数据、私人路径或原始私有日志。我们要的是一个具体失败案例，不是单纯请求 star。
+
 ## 任务合同例子：静态网页
 
 SACP 不只用于事后审计，也可以用于 agent 开工前的任务合同。
