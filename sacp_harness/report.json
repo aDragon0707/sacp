@@ -1,0 +1,72 @@
+{
+  "engine": {
+    "scenarios": [
+      {
+        "id": "S1",
+        "case": "missing evidence",
+        "trace_view": "trace records 'tests passed' verbatim; no veto",
+        "projected": "unverified",
+        "vetoed": true
+      },
+      {
+        "id": "S2",
+        "case": "accepted without health",
+        "trace_view": "trace records 'deploy accepted'; no health veto",
+        "projected": "transport_accepted (finalize=False: deployment_health_unverified)",
+        "vetoed": true
+      },
+      {
+        "id": "S3",
+        "case": "accepted is not delivered",
+        "trace_view": "trace records 'accepted'; observability calls it done, SACP calls it transport_accepted",
+        "projected": "transport_accepted",
+        "vetoed": true
+      },
+      {
+        "id": "S4",
+        "case": "delivered then bounced",
+        "trace_view": "trace keeps all three records; SACP re-projects to 'bounced', never freezes at 'delivered'",
+        "projected": "bounced",
+        "vetoed": true
+      },
+      {
+        "id": "S5",
+        "case": "deadline without provider witness",
+        "trace_view": "trace goes silent after the crash; SACP's reconciler mints deadline/owner, then retry -> compensation",
+        "projected": "attestation_timed_out (route=compensation, owner=harness-compensation)",
+        "vetoed": true
+      },
+      {
+        "id": "S6",
+        "case": "stale approval reused",
+        "trace_view": "trace records an approval exists; SACP sees input_digest mismatch and withholds approval",
+        "projected": "needs_approval",
+        "vetoed": true
+      },
+      {
+        "id": "S7",
+        "case": "retry double side-effect",
+        "trace_view": "trace records two requests; SACP returns the same refund id and refuses finalize without 'succeeded'",
+        "projected": "transport_accepted (finalize=False, idempotent)",
+        "vetoed": true
+      },
+      {
+        "id": "S8",
+        "case": "agent self-attested evidence",
+        "trace_view": "trace records the claim (self-declared evidence); SACP requires a host/provider observation, so stays unverified",
+        "projected": "unverified",
+        "vetoed": true
+      }
+    ],
+    "vetoed": 8,
+    "total": 8,
+    "false_success_allowed": 0
+  },
+  "protocol": {
+    "total": 47,
+    "pass": 47,
+    "fail": 0,
+    "error": null
+  },
+  "generated_at": "2026-09-07T06:15:43.919490+00:00"
+}

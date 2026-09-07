@@ -1,270 +1,81 @@
-# SACP: Scalable Audit and Control Protocol for AI Agents
+# SACP —— 面向 AI Agent 的可扩展审计与控制协议
 
-> No receipt, no trust.  
-> 没有回执，就不该信任。
+> 没有收据，就没有信任。
 
-SACP 是一个面向 AI agent 工作流的开源回执协议。它不试图替代 LangGraph、MCP、A2A、OpenClaw 或任何 agent 框架，而是补一个很小但很关键的层：
+SACP 是一个开放的**审计协议** + 一个**参考验证引擎**，面向长周期 AI Agent 工作。一个项目，两层：
+
+- **Spec 层** —— `SPEC.md`、`RECEIPT.md`、`STATUS_CODES.md`、`DIRTY_RUN_CASES.md`、`sample-corpus/` 定义了一套小而"文本优先"的收据格式：*声称了什么、证据来自哪里、是否经过了人类审批、下一步由谁负责。*
+- **Engine 层** —— `sacp_verify/`、`tests/`、`examples/` 证明这套协议真的能拦住失败：它把 **agent 声明**、**宿主观察**、**provider 观察** 作为三种分权来源保存，投影出保守的最终状态，并让独立 reconciler 在进程退出后仍继续收敛。
+
+SACP 不替代 LangGraph、Temporal、MCP、A2A、LangSmith/AgentOps 或任何 agent SDK。它补上的是它们缺的那一层：**把"done"变成一张可核验的收据。**
+
+## 问题
 
 ```text
-当 agent 说“我做完了”，它必须留下可检查的工作回执。
+Done. All tests passed. Ready to publish.
 ```
 
-AgentOps Doctor 是这个仓库里的第一个参考工具。你可以把一段 messy agent output 粘进去，它会输出状态码、问题诊断、缺失证据、下一步 owner，以及一份 SACP receipt。
+这最后一条消息无法证明测试真的通过、外部动作真的落地、以及发布权限真的存在。SACP 把它拆成四种分权事实：
 
-English version: [README.md](./README.md)
+| 事实 | 由谁写入 | 它证明什么 |
+|---|---|---|
+| `Claim` | 模型 | agent *声称*发生了什么——本身不证明任何东西 |
+| `HostObservation` | 非 LLM 运行时 | 本地事实：exit code、产物 digest、checkpoint |
+| `ProviderObservation` | 外部系统 | 对方的真实状态：accepted / delivered / bounced |
+| `AuthorityDecision` | 人或策略 | 高风险动作已获授权，且绑定到特定输入 |
 
-## 3 分钟快速上手
+收据是不可变观察的**派生、保守投影**——绝不是 agent 自己填的一张表。
+
+## 可度量的行为
+
+| 行为 | 结果 | 复现 |
+|---|---|---|
+| 缺失证据时永不投影为 `completed` | 保守降级 + `412 missing_evidence` | `python demo.py` |
+| provider `accepted` 永不升级为 `delivered` | 保持 `transport_accepted` 直到 provider 确认 | demo 场景 3 |
+| `delivered` → `bounced` 使最终状态降级 | `bounced` | demo 场景 4 |
+| deadline 到期且无 provider 见证仍继续收敛 | `attestation_timed_out` + owner + retry | demo 场景 5 |
+| 崩溃/重启恢复 | reconciler 从 SQLite 重新投影，不重复 timeout | `python -m examples.reconciliation_restart` |
+| bounded retry 之后转 compensation | 超过最大尝试次数后停止自动重试 | `python -m examples.bounded_recovery` |
+
+**可复现的数字：**
+
+- `56` 个确定性 / 故障注入 / 属性测试全过、`0` 失败、`0` 外部依赖 → `python -m unittest discover -s tests -v`
+- `10` 类 dirty-run 反例（重复 handoff、lease 冲突/过期、source 变更、缺失证据、inference 当事实、危险 memory 自动晋升、无收据即完成、owner 模糊……）→ `DIRTY_RUN_CASES.md`
+- `5` 种保守投影状态 → `python demo.py`
+- `33/33` 份真实杂乱 agent 输出翻译为合法收据（validator 全 PASS）→ `sample-corpus/`
+- `20` 份 raw run = `4 模型 × 5 类 dirty 任务`（deepseek / qwen / glm / kimi）→ `sample-corpus/raw-runs/`
+
+**基线对比（让数字立住的关键）：** LangSmith、AgentOps、OpenTelemetry 这类 tracing/observability 平台只*记录*发生什么、从不*否决*一个假的"done"——最接近的竞品在自己的 roadmap 里把"外部 success validator"列为"尚未完成"。SACP 的引擎就是那个缺失的否决层：把 trace 数据变成一张证据有界、保守收敛的最终状态。见 `research/open-source-agent-completion-verification.md`。
+
+## 3 分钟上手
 
 ```bash
 git clone https://github.com/aDragon0707/sacp.git
 cd sacp
-python agentops-doctor-skill/agentops_doctor.py agentops-doctor-skill/examples/done_but_no_receipt.md --lang zh
-```
 
-你会看到类似输出：
+# 引擎：看 5 种保守投影状态
+python demo.py
 
-```text
-status_code: 400
-status_text: invalid_packet / 无效工作包
-问题：它声称任务已经完成，但没有提供 SACP receipt 或验证证据。
-必须怎么修：补一份 SACP receipt，必须包含 claims、verification、next_owner 和 human_decision_required。
-```
+# 引擎：完整确定性测试套件（56 个测试，0 依赖）
+python -m unittest discover -s tests -v
 
-再试一个“声称测试通过但没有证据”的例子：
-
-```bash
-python agentops-doctor-skill/agentops_doctor.py agentops-doctor-skill/examples/unsupported_test_claim.md --lang zh
-```
-
-验证协议样例：
-
-```bash
+# spec：校验协议示例
 python validator.py --examples --strict
 ```
 
-阅读公开安全采用案例：
-
-- [Longju SACP Runtime Guard](./ADOPTION_CASE_LONGJU.zh-CN.md)
-
-## Receipt Chain
-
-Receipt Chain 是 SACP 面向长周期、多模块、多 agent 协作的可选 profile。它不是 runtime、scheduler、database 或 trace system，而是把 audit state 保留下来，方便下一棒继续接。
-
-阅读：
-
-- [SACP_RECEIPT_CHAIN.md](./SACP_RECEIPT_CHAIN.md)
-- [SACP_RECEIPT_CHAIN.zh-CN.md](./SACP_RECEIPT_CHAIN.zh-CN.md)
-- [多 agent 项目示例](./examples/receipt_chain_multi_agent_project.yaml)
-- [研究发布示例](./examples/receipt_chain_research_publish.yaml)
-
-## 协议设计参考
-
-SACP 借鉴 HTTP、Git、OpenTelemetry、MIME 和 RFC 风格的规范性语言，但仍保持为一个小型审计协议。参见 [PROTOCOL_DESIGN_REFERENCES.md](./PROTOCOL_DESIGN_REFERENCES.md)。
-
-## 本地演示页
-
-直接用浏览器打开 [sacp-demo.html](./sacp-demo.html)，可以看到 SACP 的作用：把原始完成声明变成带有证据、下一棒和人类决策边界的可审计回执。
-
-也可以打开 [sacp-triage-editor.html](./sacp-triage-editor.html)，把当前 SACP 项目状态分到 Now / Next / Later / Cut，并复制下一轮 Codex prompt。
-
-## 用你自己的 agent 输出测试
-
-把任意 agent 的最终回复、worklog 或 handoff 保存成一个文本文件：
-
-```bash
-echo "Done. All tests passed. Ready to publish." > my-agent-output.md
-python agentops-doctor-skill/agentops_doctor.py my-agent-output.md --lang zh
-```
-
-AgentOps Doctor 不会替你执行原任务。它只检查这段输出是否足够可信：
-
-- 它有没有把“完成”说成事实，却没有证据？
-- 它有没有声称测试通过，却没有命令输出？
-- 它有没有把用户一句话自动晋升成长期记忆？
-- 它有没有说明下一步归谁？
-- 它有没有在需要人类批准时越权？
-
-## 这个仓库包含什么
+## 仓库地图
 
 ```text
-SACP = 协议
-AgentOps Doctor = 参考 skill / CLI
-Dirty Run = 脏场景测试集
-validator.py = 本地参考检查器
+SPEC.md  RECEIPT.md  ENVELOPE.md  STATUS_CODES.md   # spec（SACP/0.1）
+DIRTY_RUN_CASES.md  SACP_RECEIPT_CHAIN.md          # 反例 + 链式扩展
+validator.py  agentops-doctor-skill/               # 参考实现校验器
+sample-corpus/                                     # 33 份真实输出 -> 收据
+sacp_verify/                                       # 引擎（model/verifier/reconciler/store/...）
+tests/  examples/                                  # 上面数字的来源
+research/                                          # 开源完成声明验证调研
+docs/                                              # 证据模型、状态机、设计
 ```
 
-核心文档：
+## SACP 不是什么
 
-- [SPEC.md](./SPEC.md)：协议语义
-- [ENVELOPE.md](./ENVELOPE.md)：Envelope 字段和示例
-- [RECEIPT.md](./RECEIPT.md)：Receipt 字段和示例
-- [STATUS_CODES.md](./STATUS_CODES.md)：状态码
-- [DIRTY_RUN_CASES.md](./DIRTY_RUN_CASES.md)：脏场景
-- [PROTOCOL_EVOLUTION.md](./PROTOCOL_EVOLUTION.md)：反馈如何变成 dirty case、extension、profile 和 core candidate
-- [JSON_SCHEMA_PLAN.md](./JSON_SCHEMA_PLAN.md)：v0.2 JSON Schema 的文档计划
-- [SACP_RECEIPT_CHAIN.md](./SACP_RECEIPT_CHAIN.md)：长任务协作 profile
-- [docs/OPENCLAW_LONGJU_ADAPTER_NOTE.md](./docs/OPENCLAW_LONGJU_ADAPTER_NOTE.md)：OpenClaw / Longju 的 docs-only adapter 映射
-- [PROTOCOL_DESIGN_REFERENCES.md](./PROTOCOL_DESIGN_REFERENCES.md)：协议设计参考
-- [docs/SACP_AGENT_TEST_PROMPT.md](./docs/SACP_AGENT_TEST_PROMPT.md)：给 OpenClaw、herness 或其他 agent 的测试 prompt
-- [docs/DUAL_AGENT_TRIAL_RUNBOOK.md](./docs/DUAL_AGENT_TRIAL_RUNBOOK.md)：双 agent 试跑手册
-- [docs/DUAL_AGENT_TRIAL_RESULT_TEMPLATE.md](./docs/DUAL_AGENT_TRIAL_RESULT_TEMPLATE.md)：OpenClaw / herness 报告对比和 coordinator receipt 模板
-- [agentops-doctor-skill/](./agentops-doctor-skill)：一条命令的参考工具
-- [examples/](./examples)：合法和脏样例
-- [sample-corpus/](./sample-corpus)：转写成 SACP receipt 的 messy output 样本
-- [ADOPTION_CASE_LONGJU.md](./ADOPTION_CASE_LONGJU.md)：公开安全的本地采用案例
-
-## 真实采用案例
-
-SACP/0.1 已经在 Longju 这个本地 agent operator 上试过，作为状态层来工作。
-
-这次接入使用的是文件式 `.sacp/` ledger，并由一个 runtime guard 保护四个 gate：
-
-```text
-PreTask -> ContextCheck -> PreExternalAction -> PostTask
-```
-
-公开安全 trial 覆盖了 false completion、prompt injection、skill distillation 和重复 handoff：
-
-```text
-false completion      -> 412 missing_evidence
-prompt injection      -> 需要人类批准
-skill distillation    -> 只生成 candidate，不自动 promote
-duplicate handoff     -> 204 no_action_needed
-```
-
-阅读案例：[ADOPTION_CASE_LONGJU.zh-CN.md](./ADOPTION_CASE_LONGJU.zh-CN.md)
-
-## 具体例子
-
-原始 agent 输出：
-
-```text
-Done. All tests passed. I saved the user preference to verified memory.
-```
-
-SACP 会把它拆成三件事：
-
-```text
-1. “Done” 没有 receipt，不够。
-2. “All tests passed” 需要命令输出或证据。
-3. “verified memory” 需要人类或可信系统批准。
-```
-
-因此它大概率会得到：
-
-```text
-412 missing_evidence
-required_fix: 附上测试输出，降级不支持的声明，并要求人类批准记忆晋升。
-```
-
-这就是 SACP 的用途：不是让模型更聪明，而是让 agent 的工作状态、证据、责任边界更清楚。
-
-## 核心流程
-
-```mermaid
-flowchart LR
-    A[Agent 声称完成] --> B{有没有证据？}
-    B -- 没有 --> C[缺少证据]
-    B -- 有 --> D[AgentOps Doctor / validator]
-    D --> E{是否跨过授权边界？}
-    E -- 是 --> F[人类或可信系统决策]
-    E -- 否 --> G[派生 receipt]
-    F --> G
-    G --> H[下一位 owner 和修复动作]
-```
-
-SACP 不会凭空证明底层任务一定为真。它把 claim、evidence、审批边界、当前状态和下一位 owner 记录清楚，让人或可信系统可以继续核验。
-
-## 用你自己的 Agent 输出试一次
-
-最快的有效试验是把一次真实的 agent 回复、worklog 或 handoff 保存下来，然后运行：
-
-```bash
-python agentops-doctor-skill/agentops_doctor.py path/to/your-agent-output.md --lang zh
-```
-
-如果诊断不准确、漏掉了问题，或者发现了一个值得加入 benchmark 的失败模式，请先脱敏，再提交 GitHub issue。不要放入密钥、客户数据、私人路径或原始私有日志。我们要的是一个具体失败案例，不是单纯请求 star。
-
-## 任务合同例子：静态网页
-
-SACP 不只用于事后审计，也可以用于 agent 开工前的任务合同。
-
-例如，一个宽泛需求是：
-
-```text
-帮我从 0 写一个静态网页，主题是 Prompt Compiler Lab。
-页面要能把混乱想法整理成 GPT/Claude prompt，有输入输出、评分、检查清单，移动端也能看。
-```
-
-一个收敛后的 SACP 任务合同可以只锁定关键边界：
-
-```yaml
-sacp_version: 0.1
-tier: standard
-task_type: static_web_artifact
-objective: 创建一个单文件静态网页工具 Prompt Compiler Lab
-input_boundaries:
-  allowed_scope:
-    - plain HTML/CSS/JavaScript
-    - browser-only local behavior
-  do_not:
-    - backend
-    - API key
-    - external model call
-    - package install
-output_contract:
-  files:
-    - index.html
-  requirements:
-    - first screen is the usable tool
-    - messy idea input
-    - compiled prompt output
-    - visible quality score
-    - prompt checklist
-    - desktop and mobile readability
-validator:
-  - index.html exists
-  - required visible sections are present
-  - local JavaScript updates output from input
-  - no backend, API key, package install, or external GPT/Claude call is required
-  - desktop and mobile layout have no obvious overflow
-repair_policy: If validation fails, repair only index.html and re-check the missing requirement.
-autonomy_budget:
-  allowed:
-    - copy, clear, sample, tighten, add detail, restrained visual polish
-  limit:
-    - do not expand into backend, auth, routing, storage, or real API calls
-```
-
-这个例子的重点不是让 prompt 更长，而是把“什么算做完、什么不能做、失败怎么修、哪里允许 agent 自主发挥”说清楚。
-
-在一次本地试跑中，这种 SACP 任务合同产出了一个纯 HTML/CSS/JavaScript 的单文件工具页，并通过了桌面/移动端无横向溢出、输入生成输出、评分、checklist、copy、clear 等检查。
-
-安全说法：
-
-```text
-SACP 可以帮助把宽泛任务变成可执行、可验收、可修复的任务合同。
-```
-
-不安全说法：
-
-```text
-SACP 总是比默认 agent 更强。
-所有网页任务都应该强制包含 Prompt IR / GPT version / Claude version / redaction。
-```
-
-## 什么时候用
-
-- 你在做 agent skill，想检查输出是否可接受。
-- 你在跑多 agent workflow，需要 handoff、attempt、receipt 和 next-owner 纪律。
-- 你想比较不同模型或框架的完成声明是否可信。
-- 你想收集 hallucination、missing evidence、memory pollution 的样本。
-- 你想让 AI 工作从聊天记录，变成可审计工作记录。
-
-## 边界
-
-SACP 帮助 agent 产出可审计的工作回执，但它不保证事实正确。
-
-AgentOps Doctor 审核输出，但不执行原任务。
-
-SACP/0.1 仍然是 experimental alpha。下一步最有价值的是更多 messy output、adapter 示例和 adversarial test cases。
+不是 workflow engine、不是 trace UI、也不是签名/日志平台。它不判定底层事实是否真实；它把 **claim → evidence → authority → next-owner** 这条边界做得足够可见，让人或可信系统能够核验。

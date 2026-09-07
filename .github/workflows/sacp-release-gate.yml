@@ -1,0 +1,81 @@
+name: SACP release gate
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      scenario:
+        description: "Sandbox-only acceptance scenario"
+        required: true
+        type: choice
+        options:
+          - approved-fixture
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  evidence:
+    runs-on: ubuntu-latest
+    outputs:
+      test_output_digest: ${{ steps.tests.outputs.digest }}
+      artifact_digest: ${{ steps.artifact.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - id: tests
+        shell: bash
+        run: |
+          set -o pipefail
+          python -m unittest discover -s tests -v 2>&1 | tee test-output.txt
+          digest=$(sha256sum test-output.txt | cut -d' ' -f1)
+          echo "digest=sha256:${digest}" >> "$GITHUB_OUTPUT"
+      - id: artifact
+        shell: bash
+        run: |
+          tar -czf release-artifact.tgz README.md docs sacp_verify tests
+          digest=$(sha256sum release-artifact.tgz | cut -d' ' -f1)
+          echo "digest=sha256:${digest}" >> "$GITHUB_OUTPUT"
+
+  release-gate:
+    needs: evidence
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Fetch pull request reviews
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --paginate --slurp "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews" > reviews.json
+      - name: Build synthetic approval fixture
+        if: github.event_name == 'workflow_dispatch' && inputs.scenario == 'approved-fixture'
+        env:
+          COMMIT: ${{ github.sha }}
+          REVIEWER: sandbox-reviewer
+        run: >-
+          python -c "import json, os; print(json.dumps([{'id': 'synthetic-review', 'state': 'APPROVED', 'commit_id': os.environ['COMMIT'], 'submitted_at': '2026-08-31T17:00:00+00:00', 'user': {'login': os.environ['REVIEWER']}}]))" > reviews.json
+      - name: Build SACP payload
+        run: >-
+          python scripts/build_github_release_payload.py
+          --output release-payload.json
+          --reviews reviews.json
+          --action-id release-${{ github.run_id }}
+          --thread-id ${{ github.event.pull_request.number || format('manual-{0}', github.run_id) }}
+          --run-id run-${{ github.run_id }}
+          --checkpoint-id checkpoint-${{ github.sha }}
+          --input-digest sha256:${{ github.sha }}
+          --action-scope publish-production
+          --commit ${{ github.sha }}
+          --check-run-id check-${{ github.run_id }}
+          --test-output-digest ${{ needs.evidence.outputs.test_output_digest }}
+          --artifact-name release-artifact.tgz
+          --artifact-digest ${{ needs.evidence.outputs.artifact_digest }}
+      - name: Evaluate SACP release gate
+        run: python -m sacp_verify.cli --payload release-payload.json

@@ -297,6 +297,8 @@ It does not need:
 - database
 - automatic tool execution
 
+These non-goals describe the protocol core only. The reference engine (`sacp_verify/`) intentionally uses a SQLite store and a localhost HTTP staging provider to demonstrate verification and reconciliation in a runnable way; the spec itself imposes no such requirement on a conforming implementation.
+
 See [CONFORMANCE.md](./CONFORMANCE.md) for conformance levels.
 
 ## 16. Lifecycle
