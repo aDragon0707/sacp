@@ -20,11 +20,11 @@ Scope:
 - Sample corpus receipts
 - Protocol evolution rules
 
-Non-goals:
+Protocol-core non-goals. The spec itself deliberately requires none of these; the reference engine (`sacp_verify/`) uses SQLite and a localhost HTTP staging provider to demonstrate verification/reconciliation, but a conforming implementation does not have to:
 
 - no hosted platform
-- no database requirement
-- no HTTP endpoint
+- no database requirement (spec core)
+- no HTTP endpoint (spec core)
 - no automatic memory promotion
 - no model training pipeline
 - no correctness guarantee
