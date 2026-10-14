@@ -1,0 +1,42 @@
+protocol: SACP/0.1
+type: receipt
+method: COMPLETE
+status_code: 200
+handoff_id: corpus_034_receipt_chain_state_role_feedback
+attempt_id: attempt_001
+agent_id: Codex
+processed_at: 2026-05-26T00:00:00+08:00
+source_fingerprint: sha256:corpus-034-receipt-chain-state-role-feedback
+claims:
+  - text: "Receipt Chain helped a coordinator continue a long-running project from compact entry, state, task, and receipt files instead of rereading the full chat history."
+    claim_type: inference
+    source_id: public_safe_workflow_feedback_034
+    support_status: supported
+  - text: "The workflow exposed ambiguity between current head, verified content commit, and verified handoff or state commit."
+    claim_type: inference
+    source_id: public_safe_workflow_feedback_034
+    support_status: supported
+  - text: "The workflow exposed a review-authority risk where local coordinator preflight could be mistaken for formal independent review."
+    claim_type: inference
+    source_id: public_safe_workflow_feedback_034
+    support_status: supported
+  - text: "The proposed improvement is documentation and optional extension guidance, not a new SACP core field."
+    claim_type: inference
+    source_id: sample-corpus/review-notes/034_receipt_chain_state_role_feedback.md
+    support_status: supported
+verification:
+  status: passed
+  method: "public-safe review note translation"
+  evidence_id:
+    - sample-corpus/review-notes/034_receipt_chain_state_role_feedback.md
+residual_risk: "This feedback is based on one public-safe workflow summary; repeated cases are needed before promoting these labels beyond docs or optional extension guidance."
+next_owner: ProtocolMaintainer
+human_decision_required: false
+extensions:
+  sacp.chain.profile: sacp-chain
+  sacp.chain.project: sacp_protocol_feedback
+  sacp.chain.module: receipt_chain_docs
+  sacp.chain.parent_handoff: hf_protocol_evolution_feedback_034
+  sacp.chain.evidence:
+    - sample-corpus/review-notes/034_receipt_chain_state_role_feedback.md
+  sacp.chain.stop_rule: "Do not promote example labels to core fields without repeated dirty cases or adapter pressure."

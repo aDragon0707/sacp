@@ -159,3 +159,17 @@ Default decision:
 Make the example sharper before making the protocol bigger.
 ```
 
+## Ergonomics Feedback
+
+Some protocol pressure is not a request for a new core field. It is a sign that an example or role boundary is too vague.
+
+Before adding semantics, ask:
+
+```text
+Would a sharper good/bad example prevent this mistake?
+Would clearer role names prevent self-review from masquerading as external review?
+Would explicit state labels prevent one field from carrying three meanings?
+```
+
+If yes, prefer a docs-only example or optional extension note first. A real workflow can be uncomfortable in useful ways: the discomfort should become a small dirty case or feedback receipt before it becomes protocol surface area.
+
