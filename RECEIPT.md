@@ -140,6 +140,45 @@ next_owner: Human
 human_decision_required: true
 ```
 
+## Micro Receipt For Small Maintenance Tasks
+
+A micro receipt is not a new protocol type. It is the smallest useful way to write a normal SACP receipt for a small, low-risk maintenance task.
+
+Use it when:
+
+- the task is narrow
+- the evidence is concrete
+- no public release, memory promotion, spending, external contact, or high-impact action is involved
+- one claim is enough to describe what was done
+
+Do not use it to hide risk or skip required fields.
+
+```yaml
+protocol: SACP/0.1
+type: receipt
+method: COMPLETE
+status_code: 200
+handoff_id: hf_merge_pr_001
+attempt_id: attempt_001
+agent_id: Codex
+claims:
+  - text: "PR #1 was merged and SACP examples validation passed."
+    claim_type: tool_result
+    source_id: gh_pr_merge_1_and_validator_output
+    support_status: supported
+verification:
+  status: passed
+  method: "GitHub CLI and local validator"
+  evidence_id: gh_pr_merge_1_and_validator_output
+residual_risk: "Only protocol examples were validated; no package release was tested."
+next_owner: Human
+human_decision_required: false
+```
+
+The micro form stays valid because it keeps the required receipt fields, cites evidence, names residual risk, and assigns a concrete next owner.
+
+Reference example: [examples/micro_receipt_maintenance.yaml](./examples/micro_receipt_maintenance.yaml)
+
 ## Valid Block Receipt
 
 ```yaml
@@ -225,4 +264,3 @@ Set `human_decision_required: true` when the next action involves:
 - irreversible or high-impact execution
 
 If this field is `true`, the agent may recommend but must not silently continue as if approval exists.
-

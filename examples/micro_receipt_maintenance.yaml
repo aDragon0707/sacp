@@ -1,0 +1,19 @@
+protocol: SACP/0.1
+type: receipt
+method: COMPLETE
+status_code: 200
+handoff_id: hf_merge_pr_001
+attempt_id: attempt_001
+agent_id: Codex
+claims:
+  - text: "PR #1 was merged and SACP examples validation passed."
+    claim_type: tool_result
+    source_id: gh_pr_merge_1_and_validator_output
+    support_status: supported
+verification:
+  status: passed
+  method: "GitHub CLI and local validator"
+  evidence_id: gh_pr_merge_1_and_validator_output
+residual_risk: "Only protocol examples were validated; no package release was tested."
+next_owner: Human
+human_decision_required: false
