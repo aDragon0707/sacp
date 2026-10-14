@@ -4,7 +4,9 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import json
+import os
 import yaml
+from unittest.mock import patch
 
 from scripts.build_ci_receipt import PR_REQUIRED_JOBS, build_receipt
 from scripts.check_pr_gate import REQUIRED_JOBS, evaluate_gate
@@ -201,6 +203,30 @@ class ReceiptBuilderTests(unittest.TestCase):
         )
         self.assertEqual(receipt["method"], "COMPLETE")
         self.assertEqual(receipt["extensions"]["github.head_sha"], HEAD_SHA)
+
+    def test_main_receipt_uses_github_run_id(self) -> None:
+        items = {
+            job: evidence(job, head_sha=HEAD_SHA)
+            for job in PR_REQUIRED_JOBS
+            if job != "pr-policy"
+        }
+        for item in items.values():
+            item["base_sha"] = BASE_SHA
+            item["merge_sha"] = HEAD_SHA
+        event = {
+            "before": BASE_SHA,
+            "after": HEAD_SHA,
+            "head_commit": {"id": HEAD_SHA, "timestamp": "2026-10-14T12:00:00+00:00"},
+        }
+        with patch.dict(os.environ, {"GITHUB_RUN_ID": "987654"}):
+            receipt = build_receipt(
+                event=event,
+                mode="main",
+                evidence=items,
+                required_jobs=tuple(items),
+            )
+        self.assertEqual(receipt["attempt_id"], "github-run-987654")
+        self.assertEqual(receipt["status_code"], 200)
 
 
 class EvidenceRefTests(unittest.TestCase):
