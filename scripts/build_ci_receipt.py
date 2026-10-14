@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
 import sys
 from datetime import datetime, timezone
@@ -77,7 +78,7 @@ def event_identity(event: dict[str, Any], mode: str) -> dict[str, Any]:
         "base_sha": event.get("before", ""),
         "head_sha": event.get("after", event.get("head_commit", {}).get("id", "")),
         "merge_sha": event.get("after", ""),
-        "run_id": str(event.get("run_id", "unknown")),
+        "run_id": str(event.get("run_id") or os.environ.get("GITHUB_RUN_ID") or "unknown"),
         "conclusion": "success",
         "processed_at": event.get("head_commit", {}).get("timestamp"),
     }
