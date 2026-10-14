@@ -1,0 +1,13 @@
+# Review routing only. CODEOWNERS approval becomes mandatory after a second
+# active maintainer can provide a non-author review.
+* @aDragon0707
+
+/.github/workflows/ @aDragon0707
+/scripts/check_pr_gate.py @aDragon0707
+/scripts/check_pr_policy.py @aDragon0707
+/scripts/build_ci_receipt.py @aDragon0707
+/SPEC.md @aDragon0707
+/ENVELOPE.md @aDragon0707
+/RECEIPT.md @aDragon0707
+/STATUS_CODES.md @aDragon0707
+/PROTOCOL_EVOLUTION.md @aDragon0707
