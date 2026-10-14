@@ -16,6 +16,7 @@ from .store import EventStore
 from .verifier import Verifier
 from .deployment import DeploymentGate, MockDeploymentProvider
 from .gate import ReleaseGate
+from .github_actions import GitHubActionsFixtureAdapter, GitHubActionsPayloadAdapter
 from .refund import MockRefundProvider, RefundGate
 from .staging_http import StagingHTTPClient, StagingHTTPServer
 
@@ -26,6 +27,8 @@ __all__ = [
     "GateDecision",
     "EventStore",
     "HostObservation",
+    "GitHubActionsFixtureAdapter",
+    "GitHubActionsPayloadAdapter",
     "DeploymentGate",
     "MockProvider",
     "MockDeploymentProvider",
