@@ -31,6 +31,8 @@ def extract_refs(event: dict, evidence_dir: Path) -> dict[str, str]:
             item = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             continue
+        if not isinstance(item, dict):
+            continue
         if item.get("base_sha") != expected["base_sha"] or item.get("head_sha") != expected["head_sha"]:
             continue
         merge_sha = item.get("merge_sha")
