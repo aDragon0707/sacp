@@ -1,174 +1,136 @@
 # SACP — AI Agent 完成声明核验
 
-**让“我做完了”对应一份可检查的证据。**
+**Agent 说“完成了”，你的工作流该继续吗？**
 
-SACP（Scalable Audit and Control Protocol）是一个实验性的审计协议与参考验证引擎，面向 AI Agent 工作。它记录 Agent 声称了什么、关联现有证据，并派生状态，供下游代码在继续执行前检查。
+SACP（Scalable Audit and Control Protocol）把完成条件写清楚：Agent 声称了什么、哪些证据支持声明、外部系统报告了什么，以及谁授权下一步动作。Python 参考引擎据此派生判定，再由领域 gate 决定是否允许继续。
 
-[English](./README.md) · [快速上手](#快速上手) · [架构](#架构) · [示例导航](./examples/README.zh-CN.md) · [验证结果](#验证结果) · [参与贡献](#参与贡献)
+**Experimental alpha：**提供交换协议、可执行参考引擎与可复现示例。可信证据采集仍由接入方负责。
 
-## 问题：“完成了”究竟证明了什么？
+[English](./README.md) · [快速上手](#快速上手) · [框架](#框架) · [PR 实践](#项目如何验证自己的-pr) · [示例导航](./examples/README.zh-CN.md)
 
-```text
-Done. All tests passed. Ready to publish.
-```
+## 在哪些地方有用
 
-这条回复混合了多个结论，每个结论都需要自己的证据：
+Agent 工作流经常跨越这样的边界：看起来相近的结果，实际含义不同。
 
-| 声明 | 需要检查什么 | 证据不足时的结果 |
+| 交接时的说法 | 还需要检查什么 |
+|---|---|
+| “测试通过，可以发布了。” | 测试和产物是否对应这次 commit？当前输入是否获得批准？ |
+| “部署请求已受理。” | Provider 是否报告了同一次部署、同一 revision 的健康结果？ |
+| “通知已经送达。” | 是否有匹配的交付证据？后续退信是否改变了结果？ |
+| “请求超时，重试一下。” | 外部动作是否可能已经发生？由谁负责对账？ |
+
+CI 提供执行结果，tracing 记录观察，工作流引擎管理进度。SACP 在这些交接处补充显式证据要求、完成规则和恢复责任。当本地执行、外部完成与授权不一致时，这一层最有价值。
+
+## 一个完整案例：发布预检
+
+Agent 准备发布一个版本。Gate 将测试证据、产物身份和批准放在一起检查：
+
+| 提供的证据 | Gate 结果 | 原因 |
 |---|---|---|
-| “测试通过了。” | 声明引用的测试或 CI 观察是否满足判据 | 已支持的测试声明策略下为 `unverified` |
-| “通知送达了。” | Provider 的 delivery 事件；`accepted` 只表示请求被接收 | 只有接收记录时保持 `transport_accepted` |
-| “部署健康。” | 与目标 revision 匹配的健康证据 | 没有匹配的健康证据就阻止部署最终化 |
-| “已经获批。” | 与输入、作用域、执行上下文匹配且有效的决定 | 缺失或过期的批准不能通过授权预检 |
+| CI 通过、产物匹配，但没有批准 | 阻止 | 动作尚未获得授权 |
+| 相同证据，加上匹配且有效的批准 | 允许预检通过 | 证据和授权满足发布策略 |
+| 有批准，但产物来自另一个 commit | 阻止 | 证据不支持这次发布 |
 
-SACP 将**声明、观察和授权**分开，避免把本地成功或请求受理悄悄升级为更强的业务结论。规则依赖输入证据，可信采集仍由接入方负责。
+允许结果表示预检契约通过；实际发布仍由调用方执行。
 
 ## 快速上手
 
-使用配置中的 CI 矩阵覆盖的 Python **3.11 或 3.12**。在仓库根目录运行：
+使用 Python **3.11 或 3.12**，用本地 fixture 跑上面的案例：
 
 ```bash
 git clone https://github.com/aDragon0707/sacp.git
 cd sacp
 python -m pip install -r requirements-ci.txt
-python -m sacp_harness
+python -m examples.github_release_gate
 ```
 
-Harness 先运行 8 个固定的合成反例和 3 个正向控制，再严格校验协议示例和转写 receipt。当前基线会输出：
+三种情况依次输出 `allowed=False`、`allowed=True`、`allowed=False`。示例不请求 GitHub，也不发布任何内容。
+
+再查看失败边界和合法成功的正向控制：
+
+```bash
+python -m sacp_harness
+```
 
 ```text
 Breaker cases blocked: 8/8; false-success allowed: 0
 ...
+Positive controls passed: 3/3
+
 ## Protocol validator: 49/49 strict PASS (0 FAIL)
 ```
 
-例如，S1 提交没有证据的测试成功声明，得到 `unverified`；S2 只有部署 accepted、没有健康证据，会阻止最终化。这些结果证明固定边界可复现，不是总体准确率估计。命令默认只打印；仅在显式传入 `--output-dir` 时写报告。
+Harness 使用固定合成场景，不调用模型。默认只打印，显式传入 `--output-dir .local/harness` 才写报告。接着按[示例导航](./examples/README.zh-CN.md)体验部署、退款、恢复和可选 LangGraph demo。
 
-想看同时包含允许与阻止结果的本地发布预检示例：
+## 框架
 
-```bash
-python -m examples.github_release_gate
-```
-
-示例会阻止缺少授权、允许证据与授权匹配的预检，并阻止来自其他 commit 的产物。它使用本地 fixture，不发布 release，也不调用 GitHub。
-
-接着阅读[示例导航](./examples/README.zh-CN.md)，查看学习顺序、预期结果、依赖，以及运行时 demo 与协议文档的区别。
-
-## 架构
-
-运行时遵循 **Claim → Evidence → Verdict（声明 → 证据 → 判定）**：分别记录输入，派生 receipt，再由领域 gate 判断是否允许继续。
+主链路是 **Claim → Evidence → Verdict → Gate（声明 → 证据 → 判定 → 门禁）**，由三层配合实现与验证：
 
 ```mermaid
 flowchart TB
-    subgraph Inputs[具有不同来源角色的输入]
-        C[Agent 声明]
-        H[宿主观察]
-        P[Provider 观察]
-        A[授权决定]
+    subgraph Protocol[协议层：定义交换契约]
+        Spec[SACP/0.1 文档] --> Validator[严格文档校验器]
     end
-    C --> S[SQLite 事件账本]
-    H --> S
-    P --> S
-    A --> S
-    S --> V[Verifier 与证据策略]
-    V --> R[派生回执：宿主 / 授权 / 外部状态]
-    R --> G[领域 gate：允许或阻止]
-    S --> Q[Reconciler：deadline 与见证缺失检查]
-    Q -->|追加恢复路线与责任人| S
-    T[离线 breaker harness] -. 验证 .-> V
-    T -. 验证 .-> G
+    subgraph Online[在线引擎：判断工作流中的动作]
+        Inputs[声明 / 宿主证据 / Provider 报告 / 授权] --> Verify[证据策略与验证器]
+        Verify --> Verdict[派生状态与证据引用]
+        Verdict --> Gate[发布 / 部署 / 退款门禁]
+        Verify --> Recovery[对账路线与下一责任人]
+    end
+    subgraph Offline[离线 Harness：验证明确的边界]
+        Cases[反例与正向控制]
+    end
+    Cases -. 测试 .-> Online
+    Cases -. 校验报文 .-> Validator
 ```
 
-| 输入 | 预期来源 | 含义 |
-|---|---|---|
-| `Claim` | Agent | Agent 声称发生了什么 |
-| `HostObservation` | 宿主运行时或 CI 采集器 | 观察到的执行、测试或产物数据 |
-| `ProviderObservation` | 外部系统 adapter | Provider 报告的受理、交付、健康或失败 |
-| `AuthorityDecision` | 人或可信政策 | 绑定特定输入、作用域、上下文和有效期的权限 |
+引擎分别记录声明、宿主观察、Provider 观察和授权决定，通过追加式 SQLite API 保存事件。新证据可以改变当前派生状态，历史记录继续保留。对账模块记录有界恢复路线，交给调用方执行。
 
-这些来源角色是设计契约。当前 Python store API **没有**认证写入者，也不能阻止具有写权限的调用方伪造观察。
+运行时 `DerivedReceipt` 是 Python 投影；`SACP/0.1` receipt 则是独立的交换文档，CI builder 会为仓库检查生成后者。文档合法、动作获批，都不能单独证明外部动作已经成功。
 
-项目由三部分配合：
+组件职责参见[架构说明](./docs/architecture.md)，身份关联、授权和恢复规则参见[运行时契约](./docs/runtime-contracts.md)。
 
-- **协议：**[SACP/0.1](./SPEC.md)、[receipt 格式](./RECEIPT.md)和 [validator](./validator.py) 定义并校验交换文档。
-- **在线参考引擎：**[sacp_verify/](./sacp_verify/) 保存事件、派生多维状态，提供发布、部署和退款 gate。调用方执行 reconciler，以记录缺失见证和有界恢复路线。
-- **离线 harness：**[sacp_harness/](./sacp_harness/) 验证固定失败场景与协议文档，不调用模型或执行真实业务动作。
+## 项目如何验证自己的 PR
 
-运行时 `DerivedReceipt` 是 Python 投影对象，与 `SACP/0.1` 交换 receipt 不同。[CI receipt 生成器](./scripts/build_ci_receipt.py) 单独构造协议文档。CI 的 `COMPLETE / 200` 描述自动预检，人工批准、合并和发布授权仍是独立决定。
+本仓库把基于证据的审查流程用于自己的 PR：
 
-## 验证结果
-
-以下参考结果对应代码基线 [`1b76ff3`](https://github.com/aDragon0707/sacp/commit/1b76ff386d6091535aae94acbb7517c9170bd5d8)，在本地 Windows、CPython 3.12.10 下检查：
-
-| Suite | 参考结果 | 验证内容 |
-|---|---|---|
-| `core` | 100 项测试，零失败、零 skip | Engine、gate、adapter、SQLite 并发对账/幂等与 CI 工具契约 |
-| `langgraph` | 7 项测试，零失败、零 skip | 真实 LangGraph 接线、checkpoint 持久化、重启和 localhost HTTP 集成 |
-| `protocol` | 49 份文档 strict PASS | 公开 YAML 示例与转写 receipt 满足 validator |
-| `harness` | 8/8 反例、3/3 正向控制符合预期 | 失败边界，以及合法交付、部署健康和已授权 mock 退款 |
-
-通过统一入口复现。`.local/` 已被忽略，生成的 JSON 不进入 tracked 源文件：
-
-```bash
-python scripts/run_tests.py --suite core --fail-on-skip --json .local/evidence/core.json
-python scripts/run_tests.py --suite protocol --fail-on-skip --json .local/evidence/protocol.json
-python scripts/run_tests.py --suite harness --fail-on-skip --json .local/evidence/harness.json
-
-# 可选 LangGraph 集成
-python -m pip install -r requirements-integration.txt
-python scripts/run_tests.py --suite langgraph --fail-on-skip --json .local/evidence/langgraph.json
+```text
+PR 代码 → 只读 CI → 证据 artifact
+        → 默认分支上的可信实现核对 → 绑定 SHA 的 SACP receipt
+        → 维护者审查 → 手动 squash merge → main 复验
 ```
 
-CI 配置了 Ubuntu Python 3.11/3.12、Windows Python 3.12 的 core 检查，以及 Ubuntu Python 3.12 的 LangGraph 集成检查。上述本地参考结果不能代替某一次 CI run 的证据。
+可信 collector 在生成 receipt 前，独立核对 GitHub job 结果、当前 PR 身份和源码指纹。执行定义变化需要维护者专项引入审查。`COMPLETE / 200` 表示记录 SHA 的自动预检通过；语义审查与合并授权仍由维护者负责。
 
-数字应按范围理解：协议校验检查文档符合性，harness 检查小规模合成集合。Harness 还会调用协议校验，因此计数不是互相独立的样本。`false_success_allowed` 字段统计未满足预期的 breaker 数；`0` 不代表实测的真实环境假成功率。报告的 `trace_view` 列是解释文字，不是对 tracing 产品的基准实验。
+实际记录：[PR #22](https://github.com/aDragon0707/sacp/pull/22) 通过预检后被手动合并，[main 复验 38669974026](https://github.com/aDragon0707/sacp/actions/runs/38669974026) 随后在最终合并 commit [`48ba192`](https://github.com/aDragon0707/sacp/commit/48ba19209b7ea6f9d833193f92319cee0eed291a) 上通过。[验证记录](./docs/verification-2026-10-15.md)还覆盖了测试失败、PR 推送新 SHA、workflow 修改和协议审查提示。
 
-## 接入路径
+## 选择接入入口
 
-| 目标 | 入口 | 当前范围 |
-|---|---|---|
-| 审计已有回复或交接 | [AgentOps Doctor](./agentops-doctor-skill/) | 本地文本启发式规则，不执行或独立核实原任务 |
-| 发布预检 | [GitHub fixture 示例](./examples/github_release_gate.py)与 [payload adapter](./sacp_verify/github_actions.py) | 接收 fixture / REST 形状 payload，不是经过认证的 GitHub 采集器 |
-| 检查部署或退款是否完成 | [部署示例](./examples/deployment_verification.py)、[退款示例](./examples/refund_agent.py) | Mock provider 与 localhost 实验，不做生产部署或资金操作 |
-| 接到工作流引擎 | [LangGraph adapter](./sacp_verify/langgraph_adapter.py)与[测试](./tests/test_langgraph_adapter.py) | 使用真实图与 checkpointer，宿主观察和授权输入仍为实验数据 |
-| 保留长任务交接状态 | [Receipt Chain](./SACP_RECEIPT_CHAIN.zh-CN.md) | 可选审计 profile，调度仍归调用方负责 |
-
-用 Doctor 审计一个文本文件：
-
-```bash
-python -X utf8 agentops-doctor-skill/agentops_doctor.py agentops-doctor-skill/examples/unsupported_test_claim.md --lang zh
-```
-
-CI、tracing 和工作流引擎仍负责各自的执行数据与控制。SACP 在交接或业务 gate 处补充显式证据要求、完成条件和责任归属。若任务已由一个现有 CI check 完整覆盖，额外增加一层的收益可能很小。
-
-## 成熟度与边界
-
-**Experimental alpha：**已有协议、可执行参考引擎、确定性 harness 与集成实验；没有托管 SACP 服务，也不保证生产任务正确。
-
-- **证据可信度：**类型、引用和摘要不认证来源。未知 claim type 现在默认拒绝；支持的生命周期意图仍不等于已证明完成。
-- **存储与恢复：**Store API 追加事件，不是防篡改存储。Deadline 检查在 accepted 后继续，并通过 SQLite 串行化。它记录路线和 owner；调度、实际重试及补偿仍由调用方提供。
-- **业务语义：**Gate 将完成绑定到同一个 provider receipt 和作用域。Deployment 分别提供 dispatch 授权和健康检查。Mock 退款 key 在同一 SQLite 数据库内持久化，覆盖冲突与并发，但不提供端到端 exactly-once 保证。参见[运行时契约](./docs/runtime-contracts.md)。
-- **PR 自动化：**默认分支上的可信实现独立核对 GitHub job、当前 PR head、merge parents、source tree 和测试清单，再生成 receipt。执行定义变化需要维护者专项引入审查。任意 PR 代码和测试仍在同一进程内运行，自动证据不能替代语义审查。真实 fork 端到端覆盖仍待完成，参见[验证范围](./docs/verification-2026-10-15.md)。
-- **依赖：**基础 engine 使用 Python 标准库，包括 SQLite。协议/CI 工具使用 PyYAML；LangGraph 集成需安装可选依赖清单。
-
-## 深入阅读
-
-| 问题 | 入口 |
+| 你的目标 | 从这里开始 |
 |---|---|
-| 交换契约是什么？ | [Spec](./SPEC.md)、[Envelope](./ENVELOPE.md)、[Receipt](./RECEIPT.md)、[状态码](./STATUS_CODES.md) |
-| 状态实际上如何派生？ | [Model](./sacp_verify/model.py)、[证据策略](./sacp_verify/policy.py)、[Verifier](./sacp_verify/verifier.py)、[Reconciler](./sacp_verify/reconciler.py) |
-| 各组件如何配合？ | [架构](./docs/architecture.md)、[运行时契约](./docs/runtime-contracts.md)、[开发指南](./docs/development.md) |
-| 有哪些失败场景？ | [可执行 breaker](./sacp_harness/run.py)、[测试](./tests/)、[协议 Dirty Run](./DIRTY_RUN_CASES.md) |
-| 外部 PR 如何审查？ | [维护者流程](./docs/maintainer-workflow.md)与 [workflows](./.github/workflows/) |
-| Receipt 长什么样？ | [示例](./examples/)、[样本集](./sample-corpus/)、[Receipt Chain](./SACP_RECEIPT_CHAIN.zh-CN.md) |
+| 理解或扩展交换契约 | [SACP/0.1 spec](./SPEC.md)、[receipt 格式](./RECEIPT.md) |
+| 为工作流加入证据检查 | [示例导航](./examples/README.zh-CN.md)、[参考引擎](./sacp_verify/)、[LangGraph adapter](./sacp_verify/langgraph_adapter.py) |
+| 判断发布、部署或退款条件 | [发布](./examples/github_release_gate.py)、[部署](./examples/deployment_verification.py)、[退款](./examples/refund_agent.py) |
+| 审计已有回复或交接文本 | [AgentOps Doctor](./agentops-doctor-skill/)：本地启发式规则，不重新执行原任务 |
+| 保留长任务交接状态 | [Receipt Chain](./SACP_RECEIPT_CHAIN.zh-CN.md)：可选审计 profile |
 
-[STATUS](./STATUS.md) 记录当前能力，[ROADMAP](./ROADMAP.zh-CN.md) 区分加固项与未来工作。早期研究记录和保存的报告属于历史证据，不是当前测试结果。
+## 验证与当前边界
 
-## 参与贡献
+上述 main run 验证了 Ubuntu Python 3.11/3.12、Windows Python 3.12 各 100 项 core 测试，7 项 LangGraph 测试、49 份协议文档，以及 8 个 Harness 反例和 3 个正向控制，零失败、零错误、零 skip。这些检查存在重叠，属于有范围的回归证据，不能相加当作独立样本或生产准确率。`false-success allowed: 0` 仅适用于固定反例集合。
 
-欢迎提交可复现的假完成案例、合法成功却被误拦的案例、adapter contract test 或聚焦的文档修正。请提供预期结果、实际结果、代码版本和最小复现步骤。
+- **证据来源：**Python store 不认证写入者，payload adapter 依赖接入方提供可信采集与访问控制。
+- **执行范围：**Provider 使用 mock 或 localhost 实验。调度、真实副作用、重试和补偿归调用方负责；没有托管服务或端到端 exactly-once 保证。
+- **PR 信任：**业务代码与测试仍在同进程运行，语义审查不可省略；真实 fork 端到端覆盖未验证。未配置自动批准、修复或合并。
 
-提交 Agent 输出样本前，先移除密钥、个人数据、私人路径和专有日志。参见 [CONTRIBUTING.zh-CN.md](./CONTRIBUTING.zh-CN.md)；协议变化还需审查兼容性和失败案例。
+基础引擎使用 Python 标准库；协议与 CI 工具依赖 PyYAML，LangGraph 依赖显式的可选清单。完整边界见 [STATUS](./STATUS.md)、[验证范围](./docs/verification-2026-10-15.md)和 [ROADMAP](./ROADMAP.zh-CN.md)。
+
+## 文档与贡献
+
+- **理解项目：**[架构](./docs/architecture.md) · [证据模型](./docs/evidence-model.md) · [状态投影](./docs/state-machine.md)
+- **运行与开发：**[示例](./examples/README.zh-CN.md) · [开发与 suite 命令](./docs/development.md) · [运行时契约](./docs/runtime-contracts.md)
+- **审查与扩展：**[维护者流程](./docs/maintainer-workflow.md) · [Dirty Run cases](./DIRTY_RUN_CASES.md) · [贡献指南](./CONTRIBUTING.zh-CN.md)
+
+欢迎提交可复现的假完成案例、合法成功却被误拦的案例、adapter contract test 或聚焦的文档修正。请附预期与实际结果、代码版本和最小复现步骤。提交示例前移除密钥、个人数据和专有日志。
 
 ## License
 
