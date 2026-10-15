@@ -21,7 +21,7 @@ flowchart TB
         Store --> Reconciler[Caller-invoked deadline checks]
         Reconciler -->|Append bounded route and owner| Store
     end
-    Harness[Offline synthetic harness] -. Boundary and positive controls .-> Runtime
+    Harness[Scenario regression harness] -. Boundary and positive controls .-> Runtime
     Harness -. Strict validation .-> Validator
     CI[Read-only CI execution] --> Artifacts[Untrusted evidence artifacts]
     GitHub[GitHub API and Git objects] --> Collector[Trusted default-branch collector]
@@ -71,9 +71,11 @@ The observation-only deployment health gate remains available. `can_dispatch` is
 
 ## Online engine and offline evaluation
 
-The engine runs during a workflow to derive state and gate actions. The harness runs offline against fixed synthetic scenarios. Its eight breakers exercise missing evidence, deployment acceptance without health, transport acceptance without delivery, delivery followed by bounce, missing witness, stale approval, mock retry identity, and self-attestation. Three positive controls check that valid delivery, health and an authorized mock refund can succeed.
+The engine runs during a workflow to derive state and gate actions. The existing `sacp_harness/` is a scenario regression harness for the engine: it constructs claims and mock events directly, without executing a real agent or model. Its eight breakers exercise missing evidence, deployment acceptance without health, transport acceptance without delivery, delivery followed by bounce, missing witness, stale approval, mock retry identity, and self-attestation. Three positive controls check that valid delivery, health and an authorized mock refund can succeed.
 
 Additional tests cover cross-receipt identity, callback permutations, approval revocation, SQLite restart/concurrency, and accepted-but-not-terminal reconciliation. These tests do not establish a real-world error rate. The harness's trace column is explanatory text, not a measurement of tracing systems.
+
+[ADR-0001](./adr/0001-real-agent-evaluation-with-pi.md) accepts a separate real-agent evaluation layer, starting with Pi and a fixed model configuration. This layer is planned, not implemented. Pi is the agent harness under observation; the outer evaluation harness owns collection and independent task acceptance. LangGraph experiments remain workflow integration checks, not proof of autonomous-agent performance. The new layer will compare SACP with a test-based baseline on the same real trajectories while preserving deterministic PR CI. See [evaluation vocabulary](../GLOSSARY.md).
 
 ## Why another layer?
 

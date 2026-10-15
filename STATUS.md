@@ -15,7 +15,7 @@ Start with [README](./README.md) / [中文](./README.zh-CN.md), then [architectu
 | Mock idempotency | Same-database refund reservations, conflict rejection, restart and concurrent calls | Simulated effect identity, not end-to-end exactly-once |
 | Adapters | REST-shaped GitHub payload mapping, trusted reviewer allowlist, CLI, real LangGraph wiring/checkpointers | Payload source authentication remains an integration responsibility |
 | HTTP experiments | Real localhost provider transport, simulated health/rollback | No public SACP API or production provider |
-| Harness | Eight synthetic breakers and three positive controls | Fixed small set; no measured population accuracy |
+| Scenario regression harness | Eight synthetic breakers and three positive controls for the SACP engine | Does not run a real agent/model; no measured population accuracy |
 | Governance | Read-only PR CI, trusted independent attestation, formal receipt, manual squash merge, main revalidation | Semantic review required; real fork E2E still outstanding |
 | Corpus and Doctor | 34 translated receipts, YAML examples, local text-audit CLI | Historical/synthetic inputs; Doctor uses heuristics and does not rerun tasks |
 
@@ -32,5 +32,7 @@ No hosted service, public package distribution, authenticated general event gate
 The protocol itself does not require a database or HTTP transport. The Python reference implementation uses SQLite and localhost HTTP experiments; those facts are compatible.
 
 ## Next work
+
+The accepted [real-agent evaluation decision](./docs/adr/0001-real-agent-evaluation-with-pi.md) preserves deterministic scenarios and selects Pi as the first coding-agent pilot, using an outer runner and independent task acceptance. This is planned work: no Pi adapter, selected provider/model or real-agent benchmark result exists yet.
 
 Finish controlled real fork end-to-end acceptance, strengthen isolation against arbitrary malicious Python tests, authenticate external collectors where used, and gather independently reviewed real-world false-completion and false-block cases. Keep schema/transport expansion behind concrete dirty cases and compatibility review. See [ROADMAP](./ROADMAP.md).
