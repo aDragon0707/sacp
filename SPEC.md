@@ -1,5 +1,7 @@
 # SACP/0.1 Specification Draft
 
+<!-- Controlled unmerged smoke: exercise protocol companion review warnings. -->
+
 Status: experimental draft
 
 > No receipt, no trust.

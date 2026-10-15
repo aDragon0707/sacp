@@ -1,5 +1,4 @@
 name: pr-ci
-# Controlled unmerged smoke: changed execution definition must require review.
 
 on:
   pull_request:
