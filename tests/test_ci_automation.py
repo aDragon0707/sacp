@@ -93,6 +93,10 @@ def workflow_event(
 
 
 class PrPolicyTests(unittest.TestCase):
+    def test_pi_evaluation_paths_require_adapter_review(self):
+        for path in ("sacp_eval/pi.py", "examples/pi_eval/task.json", "examples/pi_evaluation.py"):
+            self.assertIn("adapter", evaluate_policy([path], {})["change_classes"])
+
     def test_inline_permissions_local_actions_and_trigger_forms_are_checked(self):
         for content in (
             "on: [pull_request_target]\njobs: {}",

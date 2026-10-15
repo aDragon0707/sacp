@@ -44,6 +44,10 @@ Harness 检查 8 个固定反例，并校验公开协议示例和转写 receipt�
 
 恢复 demo 记录路线，不执行实际重试或补偿。账本重开示例关闭并重建对象，不是操作系统级 crash test。Mock 退款 ID 在同一个 SQLite 数据库内跨重启、并发连接保持，不提供端到端 exactly-once 保证。部署健康检查与动作授权是不同职责；dispatch 前使用 `can_dispatch` 强制批准。Payload demo 显式配置了可信 reviewer fixture。
 
+## Pi 接入：无模型回放
+
+仓库根目录运行 `python -m examples.pi_evaluation`。它回放[手工编写的 Pi 格式事件](./pi_eval/scripted-events.jsonl)，并实际独立测试两份可信源码 fixture：正确源码得到 `host_completed`；错误源码即使带着相同成功文本，也保持 `unverified`。无需安装 Pi 或调用模型，这是回归 demo，没有真实 Agent benchmark 结果。安装探测、接口契约与真实试跑所需隔离见[接入指南](../docs/pi-integration.md)。
+
 ## 可选 LangGraph Demo
 
 先安装集成依赖：

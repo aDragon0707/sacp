@@ -16,12 +16,13 @@ Start with [README](./README.md) / [中文](./README.zh-CN.md), then [architectu
 | Adapters | REST-shaped GitHub payload mapping, trusted reviewer allowlist, CLI, real LangGraph wiring/checkpointers | Payload source authentication remains an integration responsibility |
 | HTTP experiments | Real localhost provider transport, simulated health/rollback | No public SACP API or production provider |
 | Scenario regression harness | Eight synthetic breakers and three positive controls for the SACP engine | Does not run a real agent/model; no measured population accuracy |
+| Pi evaluation integration | No-model RPC probe, default-denied JSON capture API, replay and independent Python fixture acceptance | No model task run, authenticated collector or hostile-code sandbox; see [guide](./docs/pi-integration.md) |
 | Governance | Read-only PR CI, trusted independent attestation, formal receipt, manual squash merge, main revalidation | Semantic review required; real fork E2E still outstanding |
 | Corpus and Doctor | 34 translated receipts, YAML examples, local text-audit CLI | Historical/synthetic inputs; Doctor uses heuristics and does not rerun tasks |
 
 ## Verification baseline
 
-Code baseline [1b76ff3](https://github.com/aDragon0707/sacp/commit/1b76ff386d6091535aae94acbb7517c9170bd5d8): 100 core tests, 7 LangGraph tests, 49 strict protocol documents, 8 breakers and 3 positive controls. Core CI covers Ubuntu Python 3.11/3.12 and Windows Python 3.12; LangGraph runs on Ubuntu Python 3.12. Zero failures/errors/unexpected skips are required.
+Historical code baseline [1b76ff3](https://github.com/aDragon0707/sacp/commit/1b76ff386d6091535aae94acbb7517c9170bd5d8): 100 core tests, 7 LangGraph tests, 49 strict protocol documents, 8 breakers and 3 positive controls. The Pi integration increases the core inventory to 136, including 35 no-model Pi tests and one classification test. Local execution on 2026-10-15 passed all four suites with no failures/errors/skips; SHA-bound CI artifacts remain the evidence for each merged revision. Core CI covers Ubuntu Python 3.11/3.12 and Windows Python 3.12; LangGraph runs on Ubuntu Python 3.12.
 
 See the [dated verification record](./docs/verification-2026-10-15.md) for exact runs and smoke coverage. A successful receipt-generation job can write a BLOCK or FAIL receipt; inspect content and current SHA, not just a green job.
 
@@ -33,6 +34,6 @@ The protocol itself does not require a database or HTTP transport. The Python re
 
 ## Next work
 
-The accepted [real-agent evaluation decision](./docs/adr/0001-real-agent-evaluation-with-pi.md) preserves deterministic scenarios and selects Pi as the first coding-agent pilot, using an outer runner and independent task acceptance. This is planned work: no Pi adapter, selected provider/model or real-agent benchmark result exists yet.
+The accepted [real-agent evaluation decision](./docs/adr/0001-real-agent-evaluation-with-pi.md) now has an [initial no-model integration](./docs/pi-integration.md). Actual Pi 1.0.0 `get_state` passed without prompts; deterministic replay and independent source acceptance exercise the evidence path. A selected provider/model, enforced execution isolation, budget and real-agent benchmark results remain future work.
 
 Finish controlled real fork end-to-end acceptance, strengthen isolation against arbitrary malicious Python tests, authenticate external collectors where used, and gather independently reviewed real-world false-completion and false-block cases. Keep schema/transport expansion behind concrete dirty cases and compatibility review. See [ROADMAP](./ROADMAP.md).

@@ -1,0 +1,10 @@
+{
+  "schema": "sacp-eval-task/1",
+  "task_id": "addition-fixture",
+  "source_files": ["calculator.py"],
+  "test_files": ["test_acceptance.py"],
+  "required_test_ids": [
+    "test_acceptance.AdditionTests.test_mixed_sign",
+    "test_acceptance.AdditionTests.test_positive"
+  ]
+}

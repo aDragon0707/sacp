@@ -72,7 +72,7 @@ Positive controls passed: 3/3
 
 This is a **scenario regression harness for the SACP engine**: it constructs claims and mock events directly, without running a coding agent or calling a model. It prints by default; `--output-dir .local/harness` explicitly writes reports. Continue through the [example guide](./examples/README.md) for deployment, refund, recovery and optional LangGraph demos.
 
-A separate real-agent evaluation layer is planned, with Pi as the first integration pilot. It is not implemented or benchmarked yet; see [ADR-0001](./docs/adr/0001-real-agent-evaluation-with-pi.md) for the decision, independent acceptance criteria and limits.
+The separate **Pi integration** now provides a no-model installation probe, JSON event replay and independent source-test acceptance. Try `python -m examples.pi_evaluation`: a scripted success claim passes for correct code and is blocked for incorrect code. This is not a real-agent benchmark; see the [integration guide](./docs/pi-integration.md) and [ADR-0001](./docs/adr/0001-real-agent-evaluation-with-pi.md).
 
 <a id="architecture"></a>
 

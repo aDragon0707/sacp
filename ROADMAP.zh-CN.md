@@ -12,7 +12,7 @@ CI 已运行跨平台 core 矩阵、显式安装依赖的 LangGraph 集成、严
 
 ## 下一步：真实 Agent 评测试点
 
-[ADR-0001](./docs/adr/0001-real-agent-evaluation-with-pi.md)决定保留现有确定性引擎场景测试，以 Pi 为首个真实 Agent 试点。计划使用 Python 外层 runner 与 Pi JSON 子进程接口，固定并隔离环境，采集实际代码任务轨迹并独立验收交付补丁。目前尚无 adapter、选定的 provider/model、运行预算或真实评测结果。
+[ADR-0001](./docs/adr/0001-real-agent-evaluation-with-pi.md)决定保留现有确定性引擎场景测试，以 Pi 为首个真实 Agent 试点。[初版接入](./docs/pi-integration.md)已有无模型 RPC 探测、默认禁止模型执行的 JSON 子进程采集 API、事件回放及明确列出的 Python fixture 文件独立验收。下一步落实强制隔离、完整环境锁定、provider/model 与预算，再采集实际代码任务轨迹并验收补丁。目前没有真实 Agent 任务结果。
 
 先用小规模固定任务集，在同一批记录上比较 SACP 与预先定义的测试基线，报告漏检、误拦、不可判定和额外开销；注入故障与自然失败分别统计。模型调用不进入 required PR CI。分阶段验收与停止条件见 ADR。
 

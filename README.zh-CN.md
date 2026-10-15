@@ -72,7 +72,7 @@ Positive controls passed: 3/3
 
 这里是 **SACP 引擎的场景回归测试（Harness）**：直接构造声明与模拟事件，不运行 coding agent，也不调用模型。默认只打印，显式传入 `--output-dir .local/harness` 才写报告。接着按[示例导航](./examples/README.zh-CN.md)体验部署、退款、恢复和可选 LangGraph demo。
 
-另计划新增真实 Agent 评测层，以 Pi 为首个接入试点。目前尚未实现，也没有对应 benchmark 结果；选择理由、独立验收标准与边界见 [ADR-0001](./docs/adr/0001-real-agent-evaluation-with-pi.md)。
+独立的 **Pi 接入层**已提供无模型安装探测、JSON 事件回放和交付源码的独立测试验收。运行 `python -m examples.pi_evaluation`：同一条合成成功声明，正确源码通过、错误源码被阻止。尚无真实 Agent benchmark；用法与边界见[接入指南](./docs/pi-integration.md)和 [ADR-0001](./docs/adr/0001-real-agent-evaluation-with-pi.md)。
 
 <a id="框架"></a>
 
