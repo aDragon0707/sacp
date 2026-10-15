@@ -58,6 +58,12 @@ This last command requires a caller-supplied REST-shaped fixture; see [payload e
 
 Formal CI receipts require an independent attestation from default-branch code. Local suite JSON alone cannot create a trustworthy COMPLETE. `build_ci_receipt.py` returning zero means a valid receipt was written; it may contain BLOCK or FAIL. Consumers must read `method`, verification status, recorded SHA and current GitHub checks. See [maintainer workflow](./maintainer-workflow.md).
 
+## Evaluation layers
+
+`python -m sacp_harness` remains a deterministic regression command for the SACP engine and protocol validator. It does not execute Pi, another coding agent or any model. LangGraph suites test graph/checkpointer wiring; they do not establish model-driven task performance.
+
+[ADR-0001](./adr/0001-real-agent-evaluation-with-pi.md) defines the planned Pi pilot: a separate Python outer runner, JSON subprocess capture, isolated/pinned runtime and independent acceptance on delivered code. No install command, agent run or new evaluation suite is implemented by that decision. Pi provider/model, runtime pin, budget and environment must be resolved before real execution. Ordinary core/protocol/harness jobs must retain their existing deterministic interface and must not silently invoke a model.
+
 ## Public/private boundary
 
 Public docs contain reproducible commands and scoped evidence. Keep personal interview notes, outreach drafts, credentials, private logs and local absolute paths outside public commits. Historical corpus documents and saved reports retain their historical meaning; do not rewrite them to imply a new evaluation occurred.

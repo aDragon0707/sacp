@@ -10,6 +10,12 @@ The text-first spec, validator, dirty cases, Receipt Chain profile, local Doctor
 
 CI runs a cross-platform core matrix, explicit LangGraph integration, strict protocol validation and a deterministic harness with positive controls. Trusted default-branch code cross-checks GitHub execution facts and current PR identity before constructing a receipt. Merging remains a manual maintainer action. See [architecture](./docs/architecture.md) and [verification scope](./docs/verification-2026-10-15.md).
 
+## Next: real-agent evaluation pilot
+
+[ADR-0001](./docs/adr/0001-real-agent-evaluation-with-pi.md) retains the existing deterministic engine scenarios and selects Pi as the first real-agent pilot. Implement a Python outer runner using Pi's JSON subprocess interface, isolate and pin its environment, then collect actual coding-task trajectories and independently verify the delivered patches. The adapter, provider/model, budget and real results are not yet available.
+
+Start with a small fixed task set and compare SACP with a predefined test-based baseline on the same records. Report missed false completions, incorrect blocks, indeterminate outcomes and overhead; separate injected faults from naturally occurring failures. Keep model calls out of required PR CI. Acceptance stages and stop conditions are defined in the ADR.
+
 ## Next: trust and independent acceptance
 
 - Complete an actual controlled fork PR smoke run; synthetic fork API tests are not equivalent.

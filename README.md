@@ -70,7 +70,9 @@ Positive controls passed: 3/3
 ## Protocol validator: 49/49 strict PASS (0 FAIL)
 ```
 
-The harness uses fixed synthetic scenarios without model calls. It prints by default; `--output-dir .local/harness` explicitly writes reports. Continue through the [example guide](./examples/README.md) for deployment, refund, recovery and optional LangGraph demos.
+This is a **scenario regression harness for the SACP engine**: it constructs claims and mock events directly, without running a coding agent or calling a model. It prints by default; `--output-dir .local/harness` explicitly writes reports. Continue through the [example guide](./examples/README.md) for deployment, refund, recovery and optional LangGraph demos.
+
+A separate real-agent evaluation layer is planned, with Pi as the first integration pilot. It is not implemented or benchmarked yet; see [ADR-0001](./docs/adr/0001-real-agent-evaluation-with-pi.md) for the decision, independent acceptance criteria and limits.
 
 <a id="architecture"></a>
 
@@ -89,7 +91,7 @@ flowchart TB
         Verdict --> Gate[Release / deployment / refund gate]
         Verify --> Recovery[Reconciliation route and next owner]
     end
-    subgraph Offline[Offline harness: verify explicit boundaries]
+    subgraph Offline[Scenario regression: verify engine boundaries]
         Cases[Breakers and positive controls]
     end
     Cases -. Exercise .-> Online
@@ -147,6 +149,7 @@ The base engine uses Python's standard library; protocol/CI tooling requires PyY
 ## 📚 Documentation and contributing
 
 - **Understand:** [Architecture](./docs/architecture.md) · [Evidence model](./docs/evidence-model.md) · [State projection](./docs/state-machine.md)
+- **Evaluation decisions:** [Vocabulary](./GLOSSARY.md) · [ADR-0001: real-agent evaluation with Pi](./docs/adr/0001-real-agent-evaluation-with-pi.md)
 - **Run and develop:** [Examples](./examples/README.md) · [Development and suite commands](./docs/development.md) · [Runtime contracts](./docs/runtime-contracts.md)
 - **Review and extend:** [Maintainer workflow](./docs/maintainer-workflow.md) · [Dirty Run cases](./DIRTY_RUN_CASES.md) · [Contributing](./CONTRIBUTING.md)
 

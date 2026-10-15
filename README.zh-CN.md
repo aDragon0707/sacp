@@ -70,7 +70,9 @@ Positive controls passed: 3/3
 ## Protocol validator: 49/49 strict PASS (0 FAIL)
 ```
 
-Harness 使用固定合成场景，不调用模型。默认只打印，显式传入 `--output-dir .local/harness` 才写报告。接着按[示例导航](./examples/README.zh-CN.md)体验部署、退款、恢复和可选 LangGraph demo。
+这里是 **SACP 引擎的场景回归测试（Harness）**：直接构造声明与模拟事件，不运行 coding agent，也不调用模型。默认只打印，显式传入 `--output-dir .local/harness` 才写报告。接着按[示例导航](./examples/README.zh-CN.md)体验部署、退款、恢复和可选 LangGraph demo。
+
+另计划新增真实 Agent 评测层，以 Pi 为首个接入试点。目前尚未实现，也没有对应 benchmark 结果；选择理由、独立验收标准与边界见 [ADR-0001](./docs/adr/0001-real-agent-evaluation-with-pi.md)。
 
 <a id="框架"></a>
 
@@ -89,7 +91,7 @@ flowchart TB
         Verdict --> Gate[发布 / 部署 / 退款门禁]
         Verify --> Recovery[对账路线与下一责任人]
     end
-    subgraph Offline[离线 Harness：验证明确的边界]
+    subgraph Offline[场景回归测试：验证引擎边界]
         Cases[反例与正向控制]
     end
     Cases -. 测试 .-> Online
@@ -147,6 +149,7 @@ PR 代码 → 只读 CI → 证据 artifact
 ## 📚 文档与贡献
 
 - **理解项目：**[架构](./docs/architecture.md) · [证据模型](./docs/evidence-model.md) · [状态投影](./docs/state-machine.md)
+- **评测决策：**[术语](./GLOSSARY.md) · [ADR-0001：真实 Agent 评测与 Pi 选择](./docs/adr/0001-real-agent-evaluation-with-pi.md)
 - **运行与开发：**[示例](./examples/README.zh-CN.md) · [开发与 suite 命令](./docs/development.md) · [运行时契约](./docs/runtime-contracts.md)
 - **审查与扩展：**[维护者流程](./docs/maintainer-workflow.md) · [Dirty Run cases](./DIRTY_RUN_CASES.md) · [贡献指南](./CONTRIBUTING.zh-CN.md)
 
