@@ -277,7 +277,8 @@ class CompletionVerificationTests(unittest.TestCase):
             self.assertEqual(len(resumed_reconciler.reconcile(timeout_at)), 1)
             receipt = resumed_verifier.project_receipt("a10-restart", timeout_at)
             self.assertEqual(receipt.status, "attestation_timed_out")
-            self.assertTrue(receipt.retry_allowed)
+            self.assertFalse(receipt.retry_allowed)
+            self.assertEqual(receipt.recovery_route, "human_review")
             resumed_store.close()
 
             restarted_store = EventStore(database)
@@ -351,7 +352,7 @@ class CompletionVerificationTests(unittest.TestCase):
         self.assertEqual(receipt.next_action_owner, "compensation-queue")
         self.assertEqual(len(reconciler.reconcile(BASE + timedelta(minutes=13))), 0)
 
-    def test_provider_observation_stops_pending_retry_route(self) -> None:
+    def test_acceptance_does_not_stop_pending_terminal_check(self) -> None:
         self.store.append_claim(
             claim(
                 "a10-retry-stop",
@@ -364,7 +365,8 @@ class CompletionVerificationTests(unittest.TestCase):
         reconciler = Reconciler(self.store, self.verifier, policy=policy)
         self.assertEqual(len(reconciler.reconcile(BASE + timedelta(minutes=6))), 1)
         self.provider.emit("a10-retry-stop", "accepted", "late", BASE + timedelta(minutes=7))
-        self.assertEqual(len(reconciler.reconcile(BASE + timedelta(minutes=12))), 0)
+        self.assertEqual(len(reconciler.reconcile(BASE + timedelta(minutes=12))), 1)
+        self.assertEqual(self.verifier.project_receipt("a10-retry-stop", BASE).recovery_route, "human_review")
 
     def test_duplicate_provider_event_is_not_appended(self) -> None:
         self.store.append_claim(claim("a11", "notification_sent"))

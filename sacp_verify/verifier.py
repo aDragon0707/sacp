@@ -8,6 +8,7 @@ from typing import Any
 from .model import DerivedReceipt
 from .policy import claim_evidence_satisfied as policy_satisfies_evidence
 from .store import EventStore
+from .lifecycle import active_observations, terminal_attested
 
 
 def _dt(value: str | None) -> datetime | None:
@@ -60,6 +61,8 @@ class Verifier:
         )
         authority_ref = matching_authority[0] if matching_authority else None
         owner = self._owner(claims, matching_authority)
+        if claims:
+            reconciliations = [item for item in reconciliations if item.get("claim_ref") in {None, claims[-1][0]}]
 
         host_status = self._host_status(hosts, claims, events_by_id)
         external_status = self._provider_status(providers)
@@ -70,7 +73,7 @@ class Verifier:
         latest_reconciliation = reconciliations[-1] if reconciliations else None
         recovery_route = (latest_reconciliation or {}).get("route", "none")
         next_check_at = _dt((latest_reconciliation or {}).get("next_check_at"))
-        if providers:
+        if terminal_attested([payload for _, payload in providers]):
             recovery_route = "none"
             next_check_at = None
         if latest_reconciliation and recovery_route in {"retry", "compensation", "human_review"}:
@@ -146,16 +149,20 @@ class Verifier:
     def _provider_status(providers: list[tuple[str, dict[str, Any]]]) -> str | None:
         if not providers:
             return None
-        events = [payload.get("provider_event") for _, payload in providers]
+        active = active_observations([payload for _, payload in providers])
+        if not active:
+            return "provider_conflict"
+        events = [payload.get("provider_event") for payload in active]
         if "rolled_back" in events:
             return "deployment_rolled_back"
         if "failed" in events:
-            if any(payload.get("provider", "").startswith("mock-refund") for _, payload in providers):
+            if any("order_id" in payload.get("metadata", {}) for payload in active):
                 return "refund_failed"
             return "deployment_failed"
-        if "healthy" in events:
+        complete = terminal_attested(active)
+        if "healthy" in events and complete:
             return "provider_reported_healthy"
-        if "succeeded" in events:
+        if "succeeded" in events and complete:
             return "refund_succeeded"
         if "bounced" in events:
             return "bounced"
@@ -163,7 +170,7 @@ class Verifier:
             return "provider_error"
         if "counterparty_declined" in events:
             return "counterparty_declined"
-        if "delivered" in events:
+        if "delivered" in events and complete:
             return "provider_reported_delivered"
         if "accepted" in events:
             return "transport_accepted"
@@ -231,6 +238,8 @@ class Verifier:
         if not authorities:
             return None, "pending"
         claim = claims[-1][1] if claims else {}
+        if not all(claim.get(field) for field in ("thread_id", "run_id", "checkpoint_id", "input_digest", "action_scope")):
+            return None, "mismatched"
         for event_id, decision in reversed(authorities):
             same_scope = (
                 decision.get("thread_id") == claim.get("thread_id")
@@ -245,7 +254,7 @@ class Verifier:
             if decision_type in {"denied", "revoked"}:
                 return (event_id, decision), "denied"
             if decision_type == "approved":
-                if _dt(decision.get("expires_at")) and _dt(decision["expires_at"]) <= now:
+                if not decision.get("expires_at") or _dt(decision["expires_at"]) <= now:
                     return None, "expired"
                 return (event_id, decision), "approved"
             return None, "pending"

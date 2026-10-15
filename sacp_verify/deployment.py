@@ -7,6 +7,7 @@ from datetime import datetime
 from .model import GateDecision, ProviderObservation
 from .store import EventStore
 from .verifier import Verifier
+from .lifecycle import active_observations
 
 
 class MockDeploymentProvider:
@@ -47,15 +48,28 @@ class DeploymentGate:
         self.store = store
         self.verifier = verifier
 
-    def can_finalize(self, action_id: str, revision: str, now: datetime | None = None) -> GateDecision:
+    def can_dispatch(self, action_id: str, now: datetime | None = None) -> GateDecision:
+        """Check authorization before dispatch; health finalization is separate."""
+        receipt = self.verifier.project_receipt(action_id, now=now)
+        allowed = receipt.authority_required and receipt.authority_status == "approved" and receipt.overall_status not in {"unverified", "host_failed"}
+        return GateDecision(action_id, allowed, "deployment_authorized" if allowed else "deployment_authority_missing", receipt)
+
+    def can_finalize(self, action_id: str, revision: str, now: datetime | None = None, *, require_authority: bool = False) -> GateDecision:
+        """Check one active deployment's health; optionally require dispatch authority.
+
+        Existing observation-only callers remain supported. Claims declaring
+        authority always enforce it; consumers that dispatch must use can_dispatch.
+        """
         receipt = self.verifier.project_receipt(action_id, now=now)
         rows = self.store.events(action_id)
-        observations = [
+        observations = active_observations([
             self.store.decode(row)["payload"]
             for row in rows
             if row["event_type"] == "provider_observation"
-            and self.store.decode(row)["payload"].get("metadata", {}).get("revision") == revision
-        ]
+        ])
+        observations = [item for item in observations if item.get("metadata", {}).get("revision") == revision]
+        if (require_authority or receipt.authority_required) and receipt.authority_status != "approved":
+            return GateDecision(action_id, False, "deployment_authority_missing", receipt)
         events = [item.get("provider_event") for item in observations]
         if "rolled_back" in events:
             reason = "deployment_rolled_back"
@@ -63,7 +77,7 @@ class DeploymentGate:
         elif "failed" in events:
             reason = "deployment_health_failed"
             allowed = False
-        elif "healthy" in events and "accepted" in events:
+        elif "healthy" in events and "accepted" in events and receipt.external_status == "provider_reported_healthy" and receipt.overall_status not in {"unverified", "authority_violation", "provider_conflict", "host_failed"}:
             reason = "deployment_health_verified"
             allowed = True
         elif "accepted" in events:

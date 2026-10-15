@@ -1,97 +1,66 @@
-"""Independent deadline and absence checks."""
-
+"""Bounded absence checks, including accepted executions without a terminal result."""
 from __future__ import annotations
 
 from datetime import datetime, timezone
 
+from .lifecycle import terminal_attested
 from .model import ReconciliationEvent, RetryPolicy
 from .store import EventStore
 from .verifier import Verifier
 
 
+def _time(value: str) -> datetime:
+    parsed = datetime.fromisoformat(value)
+    return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+
+
 class Reconciler:
-    def __init__(
-        self,
-        store: EventStore,
-        verifier: Verifier,
-        policy: RetryPolicy | None = None,
-    ) -> None:
+    def __init__(self, store: EventStore, verifier: Verifier, policy: RetryPolicy | None = None) -> None:
         self.store = store
         self.verifier = verifier
         self.policy = policy or RetryPolicy()
 
     def reconcile(self, now: datetime | None = None) -> list[str]:
+        """Append due routes once per claim/attempt; never execute side effects.
+
+        Callers supply a scheduler. A configured deadline and owner are required.
+        SQLite serializes concurrent check-and-append decisions, including restarts.
+        """
         current = now or datetime.now(timezone.utc)
-        action_ids = {row["action_id"] for row in self.store.events()}
-        created: list[str] = []
-        for action_id in sorted(action_ids):
-            rows = self.store.events(action_id)
-            claims = [
-                self.store.decode(row)["payload"]
-                for row in rows
-                if row["event_type"] == "claim"
-            ]
-            if not claims:
-                continue
-            claim = claims[-1]
-            deadline_text = claim.get("attestation_deadline")
-            owner = claim.get("reconciliation_owner")
-            if not deadline_text or not owner:
-                continue
-            last_claim_sequence = max(
-                row["sequence"] for row in rows if row["event_type"] == "claim"
-            )
-            absent_rows = [
-                row
-                for row in rows
-                if row["event_type"] == "reconciliation"
-                and self.store.decode(row)["payload"].get("result") == "absent"
-            ]
-            last_absent = absent_rows[-1] if absent_rows else None
-            deadline = datetime.fromisoformat(deadline_text)
-            if deadline.tzinfo is None:
-                deadline = deadline.replace(tzinfo=timezone.utc)
-            receipt = self.verifier.project_receipt(action_id, current)
-            has_provider = bool(receipt.provider_evidence_refs)
-            if has_provider:
-                continue
-
-            if last_absent is not None and last_absent["sequence"] > last_claim_sequence:
-                previous = self.store.decode(last_absent)["payload"]
-                next_check_text = previous.get("next_check_at")
-                if next_check_text is None:
-                    continue
-                next_check = datetime.fromisoformat(next_check_text)
-                if next_check.tzinfo is None:
-                    next_check = next_check.replace(tzinfo=timezone.utc)
-                if current < next_check:
-                    continue
-                attempt = int(previous.get("attempt", 1)) + 1
-            elif current > deadline:
-                attempt = 1
-            else:
-                continue
-
-            route = "none"
-            owner_for_event = owner
-            next_check_at = None
-            if attempt < self.policy.max_attempts:
-                route = "retry"
-                next_check_at = current + self.policy.retry_delay
-            elif attempt >= self.policy.max_attempts and self.policy.compensation_owner:
-                route = "compensation"
-                owner_for_event = self.policy.compensation_owner
-
-            if current > deadline or last_absent is not None:
-                event = ReconciliationEvent(
-                    action_id=action_id,
-                    result="absent",
-                    checked_at=current,
-                    owner=owner_for_event,
-                    next_check_at=next_check_at,
-                    attempt=attempt,
-                    max_attempts=self.policy.max_attempts,
-                    route=route,
-                )
-                created.append(self.store.record_reconciliation(event))
+        created = []
+        for action_id in sorted({row["action_id"] for row in self.store.events()}):
+            with self.store.transaction():
+                event_id = self._reconcile_action(action_id, current)
+                if event_id:
+                    created.append(event_id)
         return created
+
+    def _reconcile_action(self, action_id: str, current: datetime) -> str | None:
+        rows = self.store.events(action_id)
+        claims = [row for row in rows if row["event_type"] == "claim"]
+        if not claims:
+            return None
+        latest = claims[-1]
+        claim = self.store.decode(latest)["payload"]
+        deadline, owner = claim.get("attestation_deadline"), claim.get("reconciliation_owner")
+        if not deadline or not owner or current < _time(deadline):
+            return None
+        observations = [self.store.decode(row)["payload"] for row in rows if row["event_type"] == "provider_observation"]
+        if terminal_attested(observations):
+            return None
+        previous = [self.store.decode(row)["payload"] for row in rows if row["event_type"] == "reconciliation" and row["sequence"] > latest["sequence"]]
+        absent = [item for item in previous if item.get("result") == "absent"]
+        attempt = 1
+        if absent:
+            last = absent[-1]
+            due = last.get("next_check_at")
+            if not due or current < _time(due):
+                return None
+            attempt = int(last["attempt"]) + 1
+        if attempt < self.policy.max_attempts:
+            route, next_check = "retry", current + self.policy.retry_delay
+        else:
+            route, next_check = ("compensation" if self.policy.compensation_owner else "human_review"), None
+            owner = self.policy.compensation_owner or owner
+        event = ReconciliationEvent(action_id, "absent", current, owner, next_check, attempt, self.policy.max_attempts, route, latest["event_id"])
+        return self.store.record_reconciliation(event)

@@ -25,6 +25,8 @@ class HarnessTests(unittest.TestCase):
         self.assertEqual(protocol["fail"], 0)
         self.assertIsNone(protocol["error"])
         self.assertTrue(report_passed(self.report))
+        self.assertEqual(len(self.report["positive_controls"]), 3)
+        self.assertTrue(all(item["passed"] for item in self.report["positive_controls"]))
 
     def test_explicit_output_directory_writes_deterministic_artifacts(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

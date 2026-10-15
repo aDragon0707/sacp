@@ -236,7 +236,7 @@ def _idempotent_retry() -> tuple[str, str]:
             "s7", "order-123", 4999, "USD", "idem-1", BASE + timedelta(minutes=1)
         )
         decision = RefundGate(store, Verifier(store)).can_finalize(
-            "s7", {"order_id": "order-123", "amount": 4999, "currency": "USD"}
+            "s7", {"order_id": "order-123", "amount": 4999, "currency": "USD"}, now=BASE + timedelta(minutes=1)
         )
         idempotency = "idempotent" if first == second else "duplicate"
         status = (
@@ -290,6 +290,32 @@ SCENARIOS = (
     ),
     Scenario("S8", "agent self-attested evidence", _self_attested_evidence, ("unverified",)),
 )
+
+
+def run_positive_controls() -> list[dict[str, object]]:
+    """Prove the harness also allows supported success, rather than blocking all."""
+    store = EventStore()
+    try:
+        verifier = Verifier(store)
+        _claim(store, "positive-notification", "Notification requested", claim_type="notification_sent")
+        provider = MockProvider(store)
+        provider.emit("positive-notification", "accepted", "positive", BASE)
+        provider.emit("positive-notification", "delivered", "positive", BASE + timedelta(minutes=1))
+        notification = verifier.project_receipt("positive-notification", BASE).overall_status == "provider_reported_delivered"
+        deployment = MockDeploymentProvider(store)
+        deployment.emit("positive-deployment", "accepted", "positive", "rev", BASE)
+        deployment.emit("positive-deployment", "healthy", "positive", "rev", BASE)
+        healthy = DeploymentGate(store, verifier).can_finalize("positive-deployment", "rev", BASE).allowed
+        expected = {"order_id": "order", "amount": 100, "currency": "USD"}
+        _claim(store, "positive-refund", "Refund requested", claim_type="refund_requested", metadata=expected, requires_authority=True, input_digest="refund-input", action_scope="refund-scope")
+        store.record_authority_decision(AuthorityDecision("positive-refund", "approved", "manager", "harness-thread", "harness-run", "harness-checkpoint", "refund-input", "refund-scope", BASE + timedelta(hours=1), BASE))
+        refund = MockRefundProvider(store)
+        refund_id = refund.request("positive-refund", **expected, idempotency_key="positive", observed_at=BASE)
+        refund.webhook("positive-refund", "succeeded", refund_id, **expected, observed_at=BASE)
+        succeeded = RefundGate(store, verifier).can_finalize("positive-refund", expected, now=BASE).allowed
+        return [{"case": "matching delivery", "passed": notification}, {"case": "matching deployment health", "passed": healthy}, {"case": "authorized matching refund", "passed": succeeded}]
+    finally:
+        store.close()
 
 
 def run_protocol_validator() -> dict[str, object]:
@@ -363,6 +389,7 @@ def build_report(generated_at: datetime | None = None) -> dict[str, object]:
             "false_success_allowed": len(results) - vetoed,
         },
         "protocol": run_protocol_validator(),
+        "positive_controls": run_positive_controls(),
         "generated_at": timestamp.isoformat(),
     }
 
@@ -381,6 +408,8 @@ def report_passed(report: dict[str, object]) -> bool:
         and protocol.get("pass") == protocol.get("total")
         and protocol.get("fail") == 0
         and protocol.get("error") is None
+        and len(report.get("positive_controls", [])) == 3
+        and all(item.get("passed") is True for item in report["positive_controls"])
     )
 
 
@@ -409,6 +438,8 @@ def render_markdown(report: dict[str, object]) -> str:
         )
     lines.extend(
         [
+            "",
+            f"Positive controls passed: {sum(item['passed'] for item in report['positive_controls'])}/3",
             "",
             f"## Protocol validator: {protocol['pass']}/{protocol['total']} strict PASS "
             f"({protocol['fail']} FAIL)",

@@ -66,7 +66,7 @@ class RefundProviderTests(unittest.TestCase):
         receipt = self.verifier.project_receipt("refund-1", BASE)
         self.assertEqual(receipt.external_status, "transport_accepted")
         self.assertNotEqual(receipt.external_status, "refund_succeeded")
-        decision = RefundGate(self.store, self.verifier).can_finalize("refund-1", refund_claim().metadata)
+        decision = RefundGate(self.store, self.verifier).can_finalize("refund-1", refund_claim().metadata, now=BASE)
         self.assertFalse(decision.allowed)
 
     def test_idempotency_key_does_not_create_duplicate_refund(self) -> None:
@@ -83,7 +83,7 @@ class RefundProviderTests(unittest.TestCase):
         self.provider.webhook("refund-1", "succeeded", refund_id, "order-123", 4999, "USD", BASE + timedelta(minutes=1))
         receipt = self.verifier.project_receipt("refund-1", BASE + timedelta(minutes=1))
         self.assertEqual(receipt.external_status, "refund_succeeded")
-        decision = RefundGate(self.store, self.verifier).can_finalize("refund-1", refund_claim().metadata)
+        decision = RefundGate(self.store, self.verifier).can_finalize("refund-1", refund_claim().metadata, now=BASE + timedelta(minutes=1))
         self.assertTrue(decision.allowed)
         self.assertEqual(decision.reason, "refund_succeeded")
 
@@ -92,7 +92,7 @@ class RefundProviderTests(unittest.TestCase):
         self.approve()
         refund_id = self.provider.request("refund-1", "order-123", 4999, "USD", "refund-key-1", BASE)
         self.provider.webhook("refund-1", "succeeded", refund_id, "order-123", 3999, "USD", BASE + timedelta(minutes=1))
-        decision = RefundGate(self.store, self.verifier).can_finalize("refund-1", refund_claim().metadata)
+        decision = RefundGate(self.store, self.verifier).can_finalize("refund-1", refund_claim().metadata, now=BASE + timedelta(minutes=1))
         self.assertFalse(decision.allowed)
         self.assertEqual(decision.reason, "refund_scope_mismatch")
 

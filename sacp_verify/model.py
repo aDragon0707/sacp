@@ -83,6 +83,7 @@ class ReconciliationEvent:
     attempt: int = 1
     max_attempts: int = 1
     route: Literal["none", "retry", "compensation", "human_review"] = "none"
+    claim_ref: str | None = None
 
 
 @dataclass(frozen=True)
