@@ -1,5 +1,9 @@
 # SACP — Verify AI Agent Completion Claims
 
+[![Main verification](https://github.com/aDragon0707/sacp/actions/workflows/main-verify.yml/badge.svg?branch=main)](https://github.com/aDragon0707/sacp/actions/workflows/main-verify.yml?query=branch%3Amain)
+[![Python 3.11 and 3.12](https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB?logo=python&logoColor=white)](./docs/development.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+
 **An agent says “done.” Should your workflow continue?**
 
 SACP (Scalable Audit and Control Protocol) makes completion conditions explicit: what the agent claims, which evidence supports it, what an external system reports, and who authorizes the next action. Its Python reference engine derives a verdict that a domain gate uses to allow or block continuation.
@@ -8,7 +12,9 @@ SACP (Scalable Audit and Control Protocol) makes completion conditions explicit:
 
 [中文](./README.zh-CN.md) · [Quick start](#quick-start) · [Architecture](#architecture) · [PR workflow](#sacp-in-this-repository) · [Example guide](./examples/README.md)
 
-## Where it helps
+<a id="where-it-helps"></a>
+
+## 🎯 Where it helps
 
 Agent workflows often cross boundaries where similar-looking results mean different things:
 
@@ -21,7 +27,9 @@ Agent workflows often cross boundaries where similar-looking results mean differ
 
 CI supplies execution results, tracing records observations, and workflow engines manage progress. SACP adds explicit evidence requirements, completion rules and recovery ownership at these handoffs. It is most useful when local execution, external completion and authorization differ.
 
-## One example: release preflight
+<a id="one-example-release-preflight"></a>
+
+## 🔎 One example: release preflight
 
 An agent wants to publish a release. The gate checks test evidence, artifact identity and approval together:
 
@@ -33,7 +41,9 @@ An agent wants to publish a release. The gate checks test evidence, artifact ide
 
 The allowed result means the preflight contract passed. Publishing remains the caller's action.
 
-## Quick start
+<a id="quick-start"></a>
+
+## 🚀 Quick start
 
 Use Python **3.11 or 3.12**. Run the example above with local fixtures:
 
@@ -62,7 +72,9 @@ Positive controls passed: 3/3
 
 The harness uses fixed synthetic scenarios without model calls. It prints by default; `--output-dir .local/harness` explicitly writes reports. Continue through the [example guide](./examples/README.md) for deployment, refund, recovery and optional LangGraph demos.
 
-## Architecture
+<a id="architecture"></a>
+
+## 🧩 Architecture
 
 The core path is **Claim → Evidence → Verdict → Gate**. Three layers make it usable and testable:
 
@@ -90,7 +102,9 @@ The runtime `DerivedReceipt` is a Python projection. A `SACP/0.1` wire receipt i
 
 See [architecture](./docs/architecture.md) for component responsibilities and [runtime contracts](./docs/runtime-contracts.md) for identity, authorization and recovery rules.
 
-## SACP in this repository
+<a id="sacp-in-this-repository"></a>
+
+## 🔄 SACP in this repository
 
 This repository applies the evidence-bound review pattern to its own pull requests:
 
@@ -104,7 +118,9 @@ The trusted collector independently checks GitHub job results, current PR identi
 
 For a concrete record, [PR #22](https://github.com/aDragon0707/sacp/pull/22) passed preflight and was manually merged; [main verification 38669974026](https://github.com/aDragon0707/sacp/actions/runs/38669974026) then passed on merged commit [`48ba192`](https://github.com/aDragon0707/sacp/commit/48ba19209b7ea6f9d833193f92319cee0eed291a). The [verification record](./docs/verification-2026-10-15.md) also covers failing tests, a new PR SHA, workflow changes and protocol review warnings.
 
-## Choose an entry point
+<a id="choose-an-entry-point"></a>
+
+## 🔌 Choose an entry point
 
 | Your goal | Start here |
 |---|---|
@@ -114,7 +130,9 @@ For a concrete record, [PR #22](https://github.com/aDragon0707/sacp/pull/22) pas
 | Audit an existing text response or handoff | [AgentOps Doctor](./agentops-doctor-skill/): local heuristics, without rerunning the task |
 | Preserve long-running handoffs | [Receipt Chain](./SACP_RECEIPT_CHAIN.md): optional audit profile |
 
-## Verification and current boundaries
+<a id="verification-and-current-boundaries"></a>
+
+## 🧪 Verification and current boundaries
 
 The linked main run verifies 100 core tests on each of Ubuntu Python 3.11/3.12 and Windows Python 3.12, seven LangGraph tests, 49 strict-valid protocol documents, and eight harness breakers plus three positive controls, with zero failures, errors or skips. These overlapping checks are scoped regression evidence, not independent samples or a production accuracy estimate. `false-success allowed: 0` applies only to the fixed breaker set.
 
@@ -124,7 +142,9 @@ The linked main run verifies 100 core tests on each of Ubuntu Python 3.11/3.12 a
 
 The base engine uses Python's standard library; protocol/CI tooling requires PyYAML, and LangGraph has explicit optional dependencies. See [STATUS](./STATUS.md), [verification scope](./docs/verification-2026-10-15.md) and [ROADMAP](./ROADMAP.md) for the full boundaries.
 
-## Documentation and contributing
+<a id="documentation-and-contributing"></a>
+
+## 📚 Documentation and contributing
 
 - **Understand:** [Architecture](./docs/architecture.md) · [Evidence model](./docs/evidence-model.md) · [State projection](./docs/state-machine.md)
 - **Run and develop:** [Examples](./examples/README.md) · [Development and suite commands](./docs/development.md) · [Runtime contracts](./docs/runtime-contracts.md)
