@@ -13,9 +13,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable
 
+import yaml
+
 ROOT = Path(__file__).resolve().parent.parent
-ANY_ACTION = re.compile(r"^\s*-?\s*uses:\s*([^@\s]+)@([^\s#]+)", re.MULTILINE)
-DANGEROUS_PERMISSION = re.compile(r"^\s*(contents|actions|checks|issues|pull-requests|packages|deployments):\s*write\s*$", re.MULTILINE)
 
 
 def _source_fingerprint(ref: str) -> str:
@@ -56,7 +56,7 @@ def classify_files(paths: Iterable[str]) -> list[str]:
     for raw_path in paths:
         path = raw_path.replace("\\", "/")
         name = Path(path).name
-        if path.startswith(".github/") or path.startswith("scripts/") or name == "requirements-ci.txt":
+        if path.startswith(".github/") or path.startswith("scripts/") or name in {"requirements-ci.txt", "validator.py"}:
             classes.add("automation")
         if path.startswith("sample-corpus/"):
             classes.add("corpus")
@@ -77,7 +77,7 @@ def classify_files(paths: Iterable[str]) -> list[str]:
             "CONFORMANCE.md",
             "PROTOCOL_EVOLUTION.md",
             "DIRTY_RUN_CASES.md",
-        } or path.startswith("examples/") and path.endswith(".yaml"):
+        } or name == "validator.py" or path.startswith("examples/") and path.endswith(".yaml"):
             classes.add("protocol")
         if path.startswith("docs/") or path.endswith(".md"):
             classes.add("docs")
@@ -87,18 +87,40 @@ def classify_files(paths: Iterable[str]) -> list[str]:
 def inspect_workflows(workflows: dict[str, str]) -> list[str]:
     errors: list[str] = []
     for path, content in workflows.items():
-        if re.search(r"^\s*pull_request_target\s*:", content, re.MULTILINE):
+        try:
+            document = yaml.safe_load(content)
+        except yaml.YAMLError:
+            errors.append(f"{path}: invalid workflow YAML")
+            continue
+        if not isinstance(document, dict):
+            errors.append(f"{path}: workflow must be a mapping")
+            continue
+        triggers = document.get("on", document.get(True, {}))
+        if "pull_request_target" in document or triggers == "pull_request_target" or isinstance(triggers, (dict, list)) and "pull_request_target" in triggers:
             errors.append(f"{path}: pull_request_target is forbidden")
-        if re.search(r"^\s*write-all\s*$", content, re.MULTILINE):
-            errors.append(f"{path}: write-all permission is forbidden")
-        if DANGEROUS_PERMISSION.search(content):
-            errors.append(f"{path}: write permission is forbidden in repository workflows")
-        for match in ANY_ACTION.finditer(content):
-            action, ref = match.groups()
-            if action.startswith("./"):
-                continue
-            if not re.fullmatch(r"[0-9a-f]{40}", ref):
-                errors.append(f"{path}: action {action}@{ref} is not pinned to a full commit SHA")
+
+        visited: set[int] = set()
+
+        def inspect(node):
+            if isinstance(node, (list, dict)):
+                if id(node) in visited:
+                    errors.append(f"{path}: YAML aliases require separate review")
+                    return
+                visited.add(id(node))
+            if isinstance(node, list):
+                for child in node:
+                    inspect(child)
+            elif isinstance(node, dict):
+                permissions = node.get("permissions")
+                if permissions == "write-all" or isinstance(permissions, dict) and any(value == "write" for value in permissions.values()):
+                    errors.append(f"{path}: write permission is forbidden")
+                action = node.get("uses")
+                if action is not None and (not isinstance(action, str) or not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_./-]+@[0-9a-f]{40}", action)):
+                    errors.append(f"{path}: action must use a full commit SHA; local and container actions require separate review")
+                for child in node.values():
+                    inspect(child)
+
+        inspect(document)
     return errors
 
 
@@ -133,6 +155,8 @@ def evaluate_policy(paths: list[str], workflows: dict[str, str]) -> dict[str, ob
             "scripts/check_pr_gate.py",
             "scripts/build_ci_receipt.py",
             "scripts/extract_ci_refs.py",
+            "scripts/ci_attestation.py",
+            "validator.py",
         }
         for path in normalized
     )

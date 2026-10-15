@@ -42,11 +42,20 @@ def load_evidence(directory: Path) -> tuple[dict[str, dict[str, Any]], list[str]
     errors: list[str] = []
     if not directory.exists():
         return evidence, [f"evidence directory is missing: {directory}"]
-    for path in sorted(directory.rglob("*.json")):
+    paths = sorted(directory.rglob("*.json"))
+    if len(paths) > 32:
+        return evidence, ["too many evidence files"]
+    for path in paths:
         try:
+            if path.is_symlink() or path.stat().st_size > 2_000_000:
+                errors.append(f"{path.name}: oversized or symlink evidence")
+                continue
             item = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError) as exc:
             errors.append(f"{path.name}: invalid JSON: {exc}")
+            continue
+        if not isinstance(item, dict):
+            errors.append(f"{path.name}: evidence must be an object")
             continue
         job = item.get("job")
         if not isinstance(job, str) or not job:
@@ -88,6 +97,7 @@ def validate_evidence(
     evidence: dict[str, dict[str, Any]],
     required_jobs: Iterable[str],
     identity: dict[str, Any],
+    attestation: dict[str, Any] | None = None,
 ) -> tuple[list[str], list[str], list[str], str | None]:
     required = tuple(required_jobs)
     missing = [job for job in required if job not in evidence]
@@ -95,17 +105,33 @@ def validate_evidence(
     invalid: list[str] = []
     fingerprints: set[str] = set()
     merge_shas: set[str] = set()
+    if not attestation:
+        blocked.append("independent GitHub attestation is missing")
+    else:
+        blocked.extend(attestation.get("errors", []))
+        for field in ("base_sha", "head_sha"):
+            if identity[field] != attestation.get(field):
+                invalid.append(f"attestation {field} does not match event")
+        expected_checks = [*required, *( ["pr-gate"] if identity.get("pr_number") else [])]
+        for job in expected_checks:
+            if attestation.get("jobs", {}).get(job) != "success":
+                blocked.append(f"{job}: independent job did not succeed")
 
     for job in required:
         item = evidence.get(job)
         if item is None:
             continue
+        if not isinstance(item, dict):
+            invalid.append(f"{job}: evidence must be an object")
+            continue
         if item.get("schema") != "sacp-ci-evidence/1":
             invalid.append(f"{job}: unsupported evidence schema")
         if item.get("status") != "passed" or item.get("exit_code") != 0:
             blocked.append(f"{job}: check did not pass")
-        if not item.get("command"):
-            invalid.append(f"{job}: command is missing")
+        suite = {"protocol-validation": "protocol", "harness": "harness", "integration-langgraph-ubuntu-312": "langgraph", "pr-policy": "pr-policy"}.get(job, "core")
+        command = (f"python scripts/check_pr_policy.py --base {identity['base_sha']} --head {identity['head_sha']}" if job == "pr-policy" else f"python scripts/run_tests.py --suite {suite} --job {job} --fail-on-skip --json evidence/{job}.json")
+        if item.get("command") != command or item.get("suite") != suite:
+            invalid.append(f"{job}: command or suite does not match job contract")
         if item.get("head_sha") != identity["head_sha"]:
             invalid.append(f"{job}: head SHA does not match current event")
         if item.get("base_sha") != identity["base_sha"]:
@@ -115,19 +141,37 @@ def validate_evidence(
             invalid.append(f"{job}: merge SHA is missing")
         else:
             merge_shas.add(str(merge_sha))
+            if attestation and merge_sha != attestation.get("merge_sha"):
+                invalid.append(f"{job}: tested merge SHA does not match independent attestation")
         fingerprint = item.get("source_fingerprint")
         if not isinstance(fingerprint, str) or not FINGERPRINT.fullmatch(fingerprint):
             invalid.append(f"{job}: source fingerprint is missing or invalid")
         else:
             fingerprints.add(fingerprint)
+            if attestation and fingerprint != attestation.get("source_fingerprint"):
+                invalid.append(f"{job}: source fingerprint does not match Git tree")
         environment = item.get("environment")
         if not isinstance(environment, dict) or not all(
             environment.get(field) for field in ("platform", "python", "runner_os")
         ):
             invalid.append(f"{job}: execution environment is incomplete")
+        elif not str(environment["python"]).startswith("3.11." if job == "core-ubuntu-311" else "3.12.") or environment["runner_os"] != ("Windows" if job == "core-windows-312" else "Linux"):
+            invalid.append(f"{job}: execution environment does not match job contract")
         results = item.get("results", {})
-        if item.get("suite") != "pr-policy" and results.get("skipped") != 0:
+        if not isinstance(results, dict):
+            invalid.append(f"{job}: results must be an object")
+            continue
+        if suite == "pr-policy":
+            if results.get("passed") is not True or results.get("errors"):
+                blocked.append(f"{job}: trusted policy did not pass")
+            continue
+        if results.get("skipped") != 0:
             blocked.append(f"{job}: skipped tests are not allowed")
+        minimum = (attestation or {}).get("minimum_tests", {}).get(suite, 1)
+        if type(results.get("total")) is not int or results["total"] < minimum:
+            blocked.append(f"{job}: test coverage below required inventory ({minimum})")
+        if results.get("successful") is not True or results.get("failures") != 0 or results.get("errors") != 0:
+            blocked.append(f"{job}: results contradict a passing check")
 
     if len(fingerprints) > 1:
         invalid.append("required jobs disagree on the source fingerprint")
@@ -149,10 +193,11 @@ def build_receipt(
     evidence: dict[str, dict[str, Any]],
     required_jobs: Iterable[str],
     load_errors: Iterable[str] = (),
+    attestation: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     required = tuple(required_jobs)
     identity = event_identity(event, mode)
-    missing, blocked, invalid, fingerprint = validate_evidence(evidence, required, identity)
+    missing, blocked, invalid, fingerprint = validate_evidence(evidence, required, identity, attestation)
     invalid = [*load_errors, *invalid]
     workflow_failed = mode == "pr" and identity["conclusion"] != "success"
 
@@ -220,10 +265,7 @@ def build_receipt(
             "github.pr_number": identity["pr_number"],
             "github.base_sha": identity["base_sha"],
             "github.head_sha": identity["head_sha"],
-            "github.merge_sha": next(
-                (item.get("merge_sha") for item in evidence.values() if item.get("merge_sha")),
-                identity["merge_sha"],
-            ),
+            "github.merge_sha": (attestation or {}).get("merge_sha", identity["merge_sha"]),
             "sacp.change_classes": change_classes,
             "sacp.risk": policy.get("risk", "unknown") if isinstance(policy, dict) else "unknown",
             "sacp.policy_warnings": policy.get("warnings", []) if isinstance(policy, dict) else [],
@@ -240,6 +282,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--evidence-dir", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--required-job", action="append", dest="required_jobs")
+    parser.add_argument("--attestation", type=Path, required=True)
     args = parser.parse_args(argv)
 
     event = json.loads(args.event.read_text(encoding="utf-8"))
@@ -251,6 +294,7 @@ def main(argv: list[str] | None = None) -> int:
         evidence=evidence,
         required_jobs=args.required_jobs or defaults,
         load_errors=load_errors,
+        attestation=json.loads(args.attestation.read_text(encoding="utf-8")),
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(

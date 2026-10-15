@@ -31,22 +31,19 @@ jobs:
           merge-multiple: true
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ github.token }}
-      - name: Resolve the tested commit identities
+      - name: Independently attest GitHub jobs and commit identities
         id: refs
-        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: >-
-          python scripts/extract_ci_refs.py
+          python scripts/ci_attestation.py --mode pr
           --event "$GITHUB_EVENT_PATH"
           --evidence-dir evidence
-      - name: Fetch untrusted PR commits without checkout
-        if: steps.refs.outcome == 'success'
-        run: >-
-          git fetch --no-tags origin
-          "${{ steps.refs.outputs.base_sha }}"
-          "${{ steps.refs.outputs.head_sha }}"
-          "${{ steps.refs.outputs.merge_sha }}"
+          --output attestation.json
+          --normalized-event attested-event.json
+          --github-output "$GITHUB_OUTPUT"
       - name: Re-run policy with trusted default-branch code
-        if: steps.refs.outcome == 'success'
+        if: steps.refs.outputs.merge_sha != ''
         continue-on-error: true
         env:
           SACP_MERGE_SHA: ${{ steps.refs.outputs.merge_sha }}
@@ -61,8 +58,9 @@ jobs:
         run: >-
           python scripts/build_ci_receipt.py
           --mode pr
-          --event "$GITHUB_EVENT_PATH"
+          --event attested-event.json
           --evidence-dir evidence
+          --attestation attestation.json
           --output receipt/pr-receipt.yaml
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
