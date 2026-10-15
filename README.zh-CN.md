@@ -1,5 +1,9 @@
 # SACP — AI Agent 完成声明核验
 
+[![主线验证](https://github.com/aDragon0707/sacp/actions/workflows/main-verify.yml/badge.svg?branch=main)](https://github.com/aDragon0707/sacp/actions/workflows/main-verify.yml?query=branch%3Amain)
+[![Python 3.11 与 3.12](https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB?logo=python&logoColor=white)](./docs/development.md)
+[![许可证：MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+
 **Agent 说“完成了”，你的工作流该继续吗？**
 
 SACP（Scalable Audit and Control Protocol）把完成条件写清楚：Agent 声称了什么、哪些证据支持声明、外部系统报告了什么，以及谁授权下一步动作。Python 参考引擎据此派生判定，再由领域 gate 决定是否允许继续。
@@ -8,7 +12,9 @@ SACP（Scalable Audit and Control Protocol）把完成条件写清楚：Agent �
 
 [English](./README.md) · [快速上手](#快速上手) · [框架](#框架) · [PR 实践](#项目如何验证自己的-pr) · [示例导航](./examples/README.zh-CN.md)
 
-## 在哪些地方有用
+<a id="在哪些地方有用"></a>
+
+## 🎯 在哪些地方有用
 
 Agent 工作流经常跨越这样的边界：看起来相近的结果，实际含义不同。
 
@@ -21,7 +27,9 @@ Agent 工作流经常跨越这样的边界：看起来相近的结果，实际�
 
 CI 提供执行结果，tracing 记录观察，工作流引擎管理进度。SACP 在这些交接处补充显式证据要求、完成规则和恢复责任。当本地执行、外部完成与授权不一致时，这一层最有价值。
 
-## 一个完整案例：发布预检
+<a id="一个完整案例发布预检"></a>
+
+## 🔎 一个完整案例：发布预检
 
 Agent 准备发布一个版本。Gate 将测试证据、产物身份和批准放在一起检查：
 
@@ -33,7 +41,9 @@ Agent 准备发布一个版本。Gate 将测试证据、产物身份和批准放
 
 允许结果表示预检契约通过；实际发布仍由调用方执行。
 
-## 快速上手
+<a id="快速上手"></a>
+
+## 🚀 快速上手
 
 使用 Python **3.11 或 3.12**，用本地 fixture 跑上面的案例：
 
@@ -62,7 +72,9 @@ Positive controls passed: 3/3
 
 Harness 使用固定合成场景，不调用模型。默认只打印，显式传入 `--output-dir .local/harness` 才写报告。接着按[示例导航](./examples/README.zh-CN.md)体验部署、退款、恢复和可选 LangGraph demo。
 
-## 框架
+<a id="框架"></a>
+
+## 🧩 核心架构
 
 主链路是 **Claim → Evidence → Verdict → Gate（声明 → 证据 → 判定 → 门禁）**，由三层配合实现与验证：
 
@@ -90,7 +102,9 @@ flowchart TB
 
 组件职责参见[架构说明](./docs/architecture.md)，身份关联、授权和恢复规则参见[运行时契约](./docs/runtime-contracts.md)。
 
-## 项目如何验证自己的 PR
+<a id="项目如何验证自己的-pr"></a>
+
+## 🔄 项目如何验证自己的 PR
 
 本仓库把基于证据的审查流程用于自己的 PR：
 
@@ -104,7 +118,9 @@ PR 代码 → 只读 CI → 证据 artifact
 
 实际记录：[PR #22](https://github.com/aDragon0707/sacp/pull/22) 通过预检后被手动合并，[main 复验 38669974026](https://github.com/aDragon0707/sacp/actions/runs/38669974026) 随后在最终合并 commit [`48ba192`](https://github.com/aDragon0707/sacp/commit/48ba19209b7ea6f9d833193f92319cee0eed291a) 上通过。[验证记录](./docs/verification-2026-10-15.md)还覆盖了测试失败、PR 推送新 SHA、workflow 修改和协议审查提示。
 
-## 选择接入入口
+<a id="选择接入入口"></a>
+
+## 🔌 选择接入入口
 
 | 你的目标 | 从这里开始 |
 |---|---|
@@ -114,7 +130,9 @@ PR 代码 → 只读 CI → 证据 artifact
 | 审计已有回复或交接文本 | [AgentOps Doctor](./agentops-doctor-skill/)：本地启发式规则，不重新执行原任务 |
 | 保留长任务交接状态 | [Receipt Chain](./SACP_RECEIPT_CHAIN.zh-CN.md)：可选审计 profile |
 
-## 验证与当前边界
+<a id="验证与当前边界"></a>
+
+## 🧪 验证与当前边界
 
 上述 main run 验证了 Ubuntu Python 3.11/3.12、Windows Python 3.12 各 100 项 core 测试，7 项 LangGraph 测试、49 份协议文档，以及 8 个 Harness 反例和 3 个正向控制，零失败、零错误、零 skip。这些检查存在重叠，属于有范围的回归证据，不能相加当作独立样本或生产准确率。`false-success allowed: 0` 仅适用于固定反例集合。
 
@@ -124,7 +142,9 @@ PR 代码 → 只读 CI → 证据 artifact
 
 基础引擎使用 Python 标准库；协议与 CI 工具依赖 PyYAML，LangGraph 依赖显式的可选清单。完整边界见 [STATUS](./STATUS.md)、[验证范围](./docs/verification-2026-10-15.md)和 [ROADMAP](./ROADMAP.zh-CN.md)。
 
-## 文档与贡献
+<a id="文档与贡献"></a>
+
+## 📚 文档与贡献
 
 - **理解项目：**[架构](./docs/architecture.md) · [证据模型](./docs/evidence-model.md) · [状态投影](./docs/state-machine.md)
 - **运行与开发：**[示例](./examples/README.zh-CN.md) · [开发与 suite 命令](./docs/development.md) · [运行时契约](./docs/runtime-contracts.md)
