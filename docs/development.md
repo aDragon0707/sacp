@@ -22,7 +22,7 @@ python -m unittest tests.test_harness -v
 git diff --check
 ```
 
-The code baseline linked from [README](../README.md) has 100 core tests, 7 integration tests, 49 protocol documents, 8 breakers and 3 positive controls. Counts are a versioned inventory, not a fixed success criterion. New tests should increase coverage; a missing dependency or skip is not a complete pass.
+The historical code baseline linked from [README](../README.md) has 100 core tests, 7 integration tests, 49 protocol documents, 8 breakers and 3 positive controls. The Pi integration increases core discovery to 136 tests. Counts are a versioned inventory, not a fixed success criterion. New tests should increase coverage; a missing dependency or skip is not a complete pass.
 
 The core suite discovers `tests/test_*.py`, excluding the optional LangGraph and harness modules. `--suite harness` executes the breaker/positive report directly; `tests.test_harness` separately checks report output and deterministic artifact handling. Protocol validates root YAML examples and translated corpus receipts strictly.
 
@@ -62,7 +62,7 @@ Formal CI receipts require an independent attestation from default-branch code. 
 
 `python -m sacp_harness` remains a deterministic regression command for the SACP engine and protocol validator. It does not execute Pi, another coding agent or any model. LangGraph suites test graph/checkpointer wiring; they do not establish model-driven task performance.
 
-[ADR-0001](./adr/0001-real-agent-evaluation-with-pi.md) defines the planned Pi pilot: a separate Python outer runner, JSON subprocess capture, isolated/pinned runtime and independent acceptance on delivered code. No install command, agent run or new evaluation suite is implemented by that decision. Pi provider/model, runtime pin, budget and environment must be resolved before real execution. Ordinary core/protocol/harness jobs must retain their existing deterministic interface and must not silently invoke a model.
+[ADR-0001](./adr/0001-real-agent-evaluation-with-pi.md) defines the Pi pilot. The [initial integration](./pi-integration.md) now supports `python -m examples.pi_evaluation` and `python -m unittest tests.test_pi_evaluation -v`, without Pi installation, model calls or credentials. Core discovery includes these tests. Only the opt-in `probe` command uses an installed Pi, for version and RPC state. Real model runs still require a selected provider/model, budget, complete runtime pin and enforced isolation; the capture library defaults to refusing model execution. Local acceptance is for trusted fixtures only. Ordinary required CI retains its deterministic interface.
 
 ## Public/private boundary
 

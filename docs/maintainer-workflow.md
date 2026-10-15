@@ -31,6 +31,7 @@ The policy checker records zero or more classes in CI evidence and the formal re
 |---|---|---|
 | `protocol` | protocol documents and YAML packets | semantics, compatibility, dirty case, example, changelog |
 | `engine` | `sacp_verify/`, `sacp_harness/` | conservative state projection, append-only history, failure tests |
+| `adapter` | `sacp_eval/`, Pi evaluation examples | event contract, delivery binding, independent acceptance and explicit execution boundaries |
 | `adapter` | GitHub, LangGraph, and CLI boundaries | external facts must not be promoted to stronger states |
 | `automation` | workflows and CI scripts | permissions, action pins, self-modification, evidence binding |
 | `corpus` | `sample-corpus/` | privacy, contamination, reproducibility |

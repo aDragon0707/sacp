@@ -1,0 +1,7 @@
+{"type":"session","version":3,"id":"scripted-fixture-not-real-agent","timestamp":"2026-10-15T00:00:00Z","cwd":"fixture"}
+{"type":"agent_start"}
+{"type":"tool_execution_start","toolCallId":"tool-1","toolName":"bash","args":{"command":"python -m unittest"}}
+{"type":"tool_execution_end","toolCallId":"tool-1","toolName":"bash","result":{"content":[{"type":"text","text":"OK"}]},"isError":false}
+{"type":"message_end","message":{"role":"assistant","content":[{"type":"text","text":"All tests passed."}],"stopReason":"stop"}}
+{"type":"agent_end","messages":[],"willRetry":false}
+{"type":"agent_settled","aborted":false}

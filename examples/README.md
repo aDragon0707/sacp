@@ -44,6 +44,10 @@ Suggested order: release gate → release lifecycle → deployment → bounded r
 
 The recovery demos record routes, not actual retry or compensation execution. Store-reopen examples close and reconstruct objects; they are not OS-level crash tests. Mock refund IDs persist within the same SQLite database across restarts and concurrent connections; this is not an end-to-end exactly-once guarantee. Deployment health checking and action authorization are separate responsibilities; use `can_dispatch` to require approval before dispatch. The payload demo explicitly configures its trusted reviewer fixture.
 
+## Pi Integration: No-Model Replay
+
+Run `python -m examples.pi_evaluation` from the repository root. It replays [scripted Pi-format events](./pi_eval/scripted-events.jsonl) and actually tests two trusted source fixtures independently: correct code becomes `host_completed`; incorrect code stays `unverified` despite the same success text. It needs no Pi installation or model. This is a regression demo, not a real-agent benchmark. See the [integration guide](../docs/pi-integration.md) for probing an installed Pi, API contracts and the isolation required before real tasks.
+
 ## Optional LangGraph Demos
 
 Install the integration dependencies first:

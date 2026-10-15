@@ -12,7 +12,7 @@ CI runs a cross-platform core matrix, explicit LangGraph integration, strict pro
 
 ## Next: real-agent evaluation pilot
 
-[ADR-0001](./docs/adr/0001-real-agent-evaluation-with-pi.md) retains the existing deterministic engine scenarios and selects Pi as the first real-agent pilot. Implement a Python outer runner using Pi's JSON subprocess interface, isolate and pin its environment, then collect actual coding-task trajectories and independently verify the delivered patches. The adapter, provider/model, budget and real results are not yet available.
+[ADR-0001](./docs/adr/0001-real-agent-evaluation-with-pi.md) retains deterministic engine scenarios and selects Pi as the first real-agent pilot. The [initial integration](./docs/pi-integration.md) provides a no-model RPC probe, JSON subprocess capture API with default-denied model execution, event replay and independent acceptance of explicit Python fixture files. Next enforce isolation, pin the complete environment, select a provider/model and budget, then collect actual coding-task trajectories and verify delivered patches. No real-agent task result is available yet.
 
 Start with a small fixed task set and compare SACP with a predefined test-based baseline on the same records. Report missed false completions, incorrect blocks, indeterminate outcomes and overhead; separate injected faults from naturally occurring failures. Keep model calls out of required PR CI. Acceptance stages and stop conditions are defined in the ADR.
 

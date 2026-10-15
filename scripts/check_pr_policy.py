@@ -69,6 +69,8 @@ def classify_files(paths: Iterable[str]) -> list[str]:
             classes.add("adapter")
         if path.startswith("sacp_harness/"):
             classes.add("engine")
+        if path.startswith("sacp_eval/") or path.startswith("examples/pi_eval/") or path == "examples/pi_evaluation.py":
+            classes.add("adapter")
         if name in {
             "SPEC.md",
             "ENVELOPE.md",
