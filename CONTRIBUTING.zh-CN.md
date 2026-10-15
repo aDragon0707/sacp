@@ -56,8 +56,12 @@ English version: [CONTRIBUTING.md](./CONTRIBUTING.md)
 运行：
 
 ```bash
-python validator.py --examples --strict
-python -m py_compile validator.py agentops-doctor/multi_model_dirty_run.py sample-corpus/collect_dirty_outputs.py agentops-doctor-skill/agentops_doctor.py
+python -m pip install -r requirements-ci.txt -r requirements-integration.txt
+python scripts/run_tests.py --suite core --fail-on-skip --json .local/evidence/core.json
+python scripts/run_tests.py --suite langgraph --fail-on-skip --json .local/evidence/langgraph.json
+python scripts/run_tests.py --suite protocol --fail-on-skip --json .local/evidence/protocol.json
+python scripts/run_tests.py --suite harness --fail-on-skip --json .local/evidence/harness.json
+git diff --check
 ```
 
 PowerShell 下检查 sample corpus receipts：
@@ -66,6 +70,8 @@ PowerShell 下检查 sample corpus receipts：
 $files = Get-ChildItem sample-corpus\translated-receipts -Filter *.yaml | ForEach-Object { $_.FullName }
 python validator.py @files --strict
 ```
+
+聚焦检查、依赖与时钟参见[开发指南](./docs/development.md)，运行顺序参见[示例导航](./examples/README.zh-CN.md)，PR 分类、证据与人工合并职责参见[维护者流程](./docs/maintainer-workflow.md)。合法生成的 receipt 也可能是 BLOCK/FAIL；receipt 写入 job 绿色不等于批准。不能把 skip 计作完整通过。
 
 ## PR 检查清单
 

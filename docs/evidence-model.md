@@ -1,66 +1,44 @@
-# 证据模型
+# 证据模型与信任边界
 
-## 四类事实
+四类输入在类型与语义上分开，最终由 Verifier 派生状态。**当前 store API 没有认证写入者**；类型分工不是已经强制实现的权限隔离。完整关系见[架构](./architecture.md)。
 
-### Claim
+| 输入 | 记录什么 | 单独不能证明什么 |
+|---|---|---|
+| `Claim` | Agent 或业务组件声称发生了什么 | 声明真实、任务完成、已经获批 |
+| `HostObservation` | 本地执行、CI 或产物数据 | 外部送达、部署健康、退款成功 |
+| `ProviderObservation` | Provider 报告的事件、receipt ID 和 metadata | Provider 被认证、accepted 等于业务完成 |
+| `AuthorityDecision` | 特定输入和作用域的授权决定 | 被授权动作已经成功 |
 
-Agent 或业务组件提出的声明，例如 `tests_passed`、`refund_reviewed`、`ready_to_publish`。它只能证明系统曾提出该声明，不能证明声明真实、证据充分或已经获得授权。原始 claim append-only，修正应产生新 claim。
-
-### HostObservation
-
-宿主直接观察到的本地事实，例如 command digest、exit code、test output artifact digest、artifact hash、checkpoint、task result。它能证明宿主观察到了某个本地执行结果，但不能证明外部系统接受、送达、结算或业务有效。
-
-### ProviderObservation
-
-外部系统原生返回的事件或状态，例如 `accepted`、`delivered`、`bounced`、`settled`、`unauthorized`，以及 provider receipt ID、webhook event 和 raw digest。它只能证明 provider 声称发生了什么；`accepted` 不自动证明 `delivered`。
-
-### AuthorityDecision
-
-人或策略系统对下一步动作的授权决定。它能证明指定主体在指定 scope 内作出授权，但不能证明被授权动作已经成功。必须关联 `thread_id`、`run_id`、`checkpoint_id`、`input_digest`、`action_scope` 和 `expires_at`。
-
-## 写入边界
+## 预期写入角色
 
 ```text
-agent              → Claim
-deterministic host → HostObservation
-provider adapter    → ProviderObservation
-human/policy system → AuthorityDecision
-verifier            → DerivedReceipt
+agent -> Claim
+trusted host -> HostObservation
+authenticated provider adapter -> ProviderObservation
+human / trusted policy -> AuthorityDecision
+Verifier -> DerivedReceipt
 ```
 
-Agent 不得直接写入 HostObservation、ProviderObservation 或 AuthorityDecision，也不得直接指定派生 `status`。同一个 `action_id` 下存在合格 observation 也不等于某条 Claim 已被证明；Claim 必须通过 `evidence_refs` 明确引用具体 event ID，验证器再检查引用的 event 类型和内容是否匹配。对 `tests_passed`，引用必须指向 `host_observation(kind=test_run)`，且包含成功 exit code 和 output digest。
+这是接入契约。具有 Python store 写权限的调用方可以构造任何一种 observation；摘要也不是签名或来源认证。需要在宿主、adapter 和存储访问层约束写入权限。Append-only API 保留历史，不意味着数据库防篡改。
 
-## 声明与最低证据
+## 当前证据策略
 
-| 声明 | 最低证据 |
+| Claim type | 实现检查 |
 |---|---|
-| `node_completed` | durable host event |
-| `tests_passed` | command/spec digest + exit status + output artifact digest |
-| `artifact_built` | artifact identity + digest + build result |
-| `transport_accepted` | provider-authored accepted event |
-| `delivered` | provider-authored delivery event |
-| `counterparty_declined` | counterparty observation |
-| `ready_to_publish` | separate human/policy authority decision |
+| `tests_passed` | 显式引用宿主 test_run 或 ci_check；执行上下文匹配，成功结果和 output digest 存在；指定 commit 时证据必须匹配 |
+| `artifact_built` | 显式引用 artifact observation；名称、digest 和指定 commit 匹配 |
+| `ready_to_publish` | 同时满足测试与 artifact 证据；发布 gate 另查授权 |
+| 支持的生命周期意图 | `notification_sent`, `publish_action`, `ask_counterparty`, `refund_requested`, `deployed`；意图本身不证明成功，provider 状态独立派生 |
+| 未知类型 | `unverified`，需新增有测试的策略后才能得到支持 |
 
-## 派生 receipt 示例
+引用仅指向同 action 内已有 event ID；host thread/run/checkpoint 也必须匹配。当前 runtime 只检查 digest 存在和关联，不通用地认证文件内容或命令输出。生产 collector 必须独立读取、计算并绑定实际产物。
 
-```yaml
-status: needs_approval
-action_id: refund-123
-thread_id: support-ticket-123
-run_id: run-456
-checkpoint_id: checkpoint-789
-claims:
-  - claim: refund_reviewed
-    evidence_refs:
-      - <host-observation-event-id>
-authority:
-  required: true
-  decision: pending
-  owner: manager_approval_queue
-next_action_owner: manager_approval_queue
-```
+Provider accepted 与终态按 provider+receipt ID 关联，再检查 revision 或 order/amount/currency。Authority 绑定 thread/run/checkpoint/input/scope/expiry；GitHub payload adapter 的 reviewer 名单来自可信构造参数，默认空名单不授权。Payload 自己声明的角色不能提升权限。
 
-`status` 必须由验证器根据 observation 和 authority 重新计算。
+## 两种 receipt
 
-生产消费方应优先读取分维度结果：`host_status`、`authority_status`、`external_status`、`overall_status`。旧的 `status` 字段只保留为 `overall_status` 的兼容别名。
+`DerivedReceipt` 是 Python 投影，包含宿主、授权、外部和 overall 状态、证据引用以及恢复路线。它不是 SACP/0.1 wire receipt。
+
+CI builder 另行生成合法 SACP/0.1 receipt：COMPLETE/200、BLOCK/412 或 FAIL/500。默认分支 collector 通过 GitHub API、Git objects、当前 head、job 结果与测试清单交叉核对 artifact。它不执行 PR 代码。测试和 application code 同进程内的恶意行为仍需人工审查或更强隔离。
+
+协议 strict PASS 仅证明该文档满足 validator；CI COMPLETE 仅证明记录 SHA 的预检契约通过；provider terminal 是 provider 声称的结果；人工授权是另一种事实。四者不能互相替代。所有数量和外部烟测边界见[验证记录](./verification-2026-10-15.md)。

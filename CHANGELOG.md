@@ -1,5 +1,17 @@
 # Changelog
 
+## Executable reference baseline and governance hardening
+
+Date: 2026-10-15
+
+- Synchronized engine, domain gates, GitHub/LangGraph/CLI adapters, deterministic harness and PR governance through focused PRs #11–#20.
+- Added independent GitHub job/current-head/merge-tree attestation; malformed, inconsistent, skipped or reduced evidence cannot automatically produce COMPLETE. Execution-definition changes require maintainer bootstrap review.
+- Bound provider completion to one execution; retained accepted-only terminal waiting and serialized bounded recovery through SQLite.
+- Persisted mock refund idempotency within a database and rejected conflicting keys; no real payment or exactly-once claim.
+- Added explicit deployment dispatch authorization and trusted latest-review configuration. Refund/CLI checks use evaluation time; deterministic fixtures pass their clock explicitly.
+- Added three positive harness controls beside the eight fixed breakers, bilingual README/example navigation, architecture, development and runtime migration documentation.
+- No SACP/0.1 required fields were added. The Python reference contracts tighten; see [runtime migration](./docs/runtime-contracts.md). Real fork E2E and production collector authentication remain outstanding.
+
 ## Receipt Chain and Protocol Evolution Update
 
 Date: 2026-05-24

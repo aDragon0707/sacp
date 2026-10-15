@@ -1,95 +1,30 @@
 # SACP 路线图
 
-English version: [ROADMAP.md](./ROADMAP.md)
+[English](./ROADMAP.md) · [当前状态](./STATUS.md) · 更新于 2026-10-15
 
-## v0.1-alpha：Text-First 协议包
+SACP/0.1 是当前交换契约。下面描述能力成熟度，不意味着每项 runtime 能力都要升级协议版本。
 
-状态：当前版本
+## 已有：协议与可执行参考基线
 
-范围：
+已有 text-first spec、validator、dirty case、Receipt Chain profile、本地 Doctor、示例和样本集。Python runtime 已包含 SQLite 事件账本、按 claim 类型检查的证据策略、独立授权/provider 状态、发布/部署/退款 gate、有界对账、mock 幂等、GitHub payload 和 LangGraph adapter，以及 localhost HTTP 实验。
 
-- Envelope
-- Receipt
-- 状态码
-- claim 类型
-- support status
-- Dirty Run cases
-- AgentOps Doctor 参考 skill
-- 本地 validator
-- 示例 packet
-- sample corpus receipts
+CI 已运行跨平台 core 矩阵、显式安装依赖的 LangGraph 集成、严格协议校验，以及包含正向控制的确定性 harness。默认分支上的可信实现交叉核对 GitHub 执行事实和当前 PR 身份，再生成 receipt。合并仍由维护者手动发起。参见[架构](./docs/architecture.md)与[验证范围](./docs/verification-2026-10-15.md)。
 
-非目标：
+## 下一步：可信度与独立验收
 
-- 不做托管平台
-- 不强制数据库
-- 不做 HTTP endpoint
-- 不自动晋升记忆
-- 不做模型训练管线
-- 不保证正确性
+- 完成真实、受控的 fork PR 烟测；合成 fork API 测试不能代替它。
+- 增强测试进程隔离，防范同进程恶意测试代码；source inventory 和执行检查是必要条件，但还不充分。
+- 针对具体接入增加经过认证的 host/provider 采集和写入隔离，不直接扩张为通用身份平台。
+- 在对象重开和 SQLite 并发之外，覆盖进程崩溃窗口和实际运行恢复。
+- 收集经过独立审查的真实失败与合法成功案例，包括误拦；保留版本化证据并审查隐私。
+- 若启用 merge queue，先定义并验证 merge-group 正式 receipt 身份。
 
-## v0.2：Schema 和更强校验
+## 候选：Schema 与互操作
 
-状态：先做文档计划；只有 dirty case 证明需要时，再做更强 validator enforcement。
+[JSON Schema 计划](./JSON_SCHEMA_PLAN.zh-CN.md)仍是计划。更强校验、MCP/A2A 映射和公开传输绑定需要实际 dirty case、最小契约、兼容说明和参考示例。LangGraph 与 GitHub 参考 adapter 已存在，不应继续写成纯未来工作。OpenClaw/Longju 的文档映射不等于 runtime 接入。
 
-计划：[JSON_SCHEMA_PLAN.md](./JSON_SCHEMA_PLAN.md)，[中文版本](./JSON_SCHEMA_PLAN.zh-CN.md)
+Receipt Chain 保持为可选 namespaced profile。[协议设计参考](./PROTOCOL_DESIGN_REFERENCES.md)约束演进。Storage、UI、runtime 和 provider 选择不进入必需核心。
 
-候选新增：
+## 稳定标准：以证据为前提
 
-- Envelope 和 Receipt 的 JSON Schema
-- 更严格的 CLI 校验
-- 结构化 receipt completeness 报告
-- 改进 Dirty Run runner
-- 扩展 public-safe sample corpus
-
-## v0.3：运行时适配器
-
-候选适配：
-
-- OpenClaw / Longju docs-only adapter note
-- OpenClaw / Longju state ledger
-- LangGraph checkpoint mapping
-- MCP tool-call evidence mapping
-- A2A task-message mapping
-- 本地 Markdown vault adapter
-
-## v0.4：传输绑定
-
-可能的 HTTP binding：
-
-```http
-POST /sacp/handoffs/{handoff_id}/claim
-POST /sacp/handoffs/{handoff_id}/attempts/{attempt_id}/complete
-GET  /sacp/receipts/{receipt_id}
-```
-
-传输层不能改变协议语义。
-
-## v0.5：一致性测试套件
-
-候选新增：
-
-- 公开 Dirty Run benchmark
-- conformance profiles
-- receipt completeness badge
-- 主流 agent 框架兼容报告
-
-## v1.0：稳定最小标准
-
-只有真实采用后才冻结：
-
-- envelope 必填字段
-- receipt 必填字段
-- method set
-- claim taxonomy
-- support status
-- core status codes
-- extension compatibility rules
-
-不冻结：
-
-- runtime
-- UI
-- storage
-- model provider
-- training method
+只有真实采用和兼容性证据充分后，才冻结稳定的最小契约。必填字段保持少量，厂商细节放在 `extensions`。不承诺正确性、不自动晋升记忆，也不把调度、支付、tracing 或部署控制都纳入协议核心。

@@ -42,7 +42,7 @@ Source: [release gate](./github_release_gate.py), [payload adapter demo](./githu
 
 Suggested order: release gate → release lifecycle → deployment → bounded recovery → store reopen. Choose refund when exploring domain-specific completion and idempotency.
 
-The recovery demos record routes, not actual retry or compensation execution. Store-reopen examples close and reconstruct objects; they are not OS-level crash tests. Mock refund IDs are process-local, not a durable exactly-once guarantee. Deployment health checking and action authorization are separate responsibilities.
+The recovery demos record routes, not actual retry or compensation execution. Store-reopen examples close and reconstruct objects; they are not OS-level crash tests. Mock refund IDs persist within the same SQLite database across restarts and concurrent connections; this is not an end-to-end exactly-once guarantee. Deployment health checking and action authorization are separate responsibilities; use `can_dispatch` to require approval before dispatch. The payload demo explicitly configures its trusted reviewer fixture.
 
 ## Optional LangGraph Demos
 

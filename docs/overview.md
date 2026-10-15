@@ -16,7 +16,7 @@ Durable execution、checkpoint、event history 和 task result 可以定位 work
 
 ## SACP 的目标
 
-SACP 将以下四类事实分权保存：
+SACP 将以下四类事实按类型与语义分别记录；当前 Python API 不认证写入者，权限隔离仍由接入方实现：
 
 ```text
 Claim               agent 提出的声明
@@ -25,7 +25,7 @@ ProviderObservation 外部系统返回的事实
 AuthorityDecision   人或策略系统授予的权限
 ```
 
-最终 receipt 是这些不可变观察的派生视图，而不是 agent 自填的表格。
+运行时 `DerivedReceipt` 是历史事件的派生视图，不是 Agent 自填状态。它与 `SACP/0.1` 交换 receipt 不同；CI builder 单独生成后者。当前架构与边界参见[架构说明](./architecture.md)、[证据模型](./evidence-model.md)和[运行时契约](./runtime-contracts.md)。
 
 ## 目标用户
 

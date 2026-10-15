@@ -56,8 +56,12 @@ Use synthetic examples when possible.
 Run:
 
 ```bash
-python validator.py --examples --strict
-python -m py_compile validator.py agentops-doctor/multi_model_dirty_run.py sample-corpus/collect_dirty_outputs.py agentops-doctor-skill/agentops_doctor.py
+python -m pip install -r requirements-ci.txt -r requirements-integration.txt
+python scripts/run_tests.py --suite core --fail-on-skip --json .local/evidence/core.json
+python scripts/run_tests.py --suite langgraph --fail-on-skip --json .local/evidence/langgraph.json
+python scripts/run_tests.py --suite protocol --fail-on-skip --json .local/evidence/protocol.json
+python scripts/run_tests.py --suite harness --fail-on-skip --json .local/evidence/harness.json
+git diff --check
 ```
 
 For sample corpus receipts in PowerShell:
@@ -66,6 +70,8 @@ For sample corpus receipts in PowerShell:
 $files = Get-ChildItem sample-corpus\translated-receipts -Filter *.yaml | ForEach-Object { $_.FullName }
 python validator.py @files --strict
 ```
+
+See [development](./docs/development.md) for focused checks, dependencies and clocks, [example navigation](./examples/README.md) for runnable demos, and [maintainer workflow](./docs/maintainer-workflow.md) for classification, evidence and manual merge responsibility. A valid generated receipt can be BLOCK/FAIL; a green receipt-writing job is not approval. Never count skipped tests as a complete pass.
 
 ## Pull Request Checklist
 
