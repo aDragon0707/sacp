@@ -1,258 +1,174 @@
-# SACP: Scalable Audit and Control Protocol for AI Agents
+# SACP — Verify AI Agent Completion Claims
 
-> No receipt, no trust.
+**Turn “done” into a claim you can check against evidence.**
 
-SACP is an open, text-first protocol for auditing long-horizon AI agent work.
+SACP (Scalable Audit and Control Protocol) is an experimental audit protocol and reference verification engine for AI agent work. It records what an agent claims, links the available evidence, and derives a status that downstream code can inspect before continuing.
 
-As agents move from single replies to tool use, memory, delegation, and multi-step workflows, final-answer evaluation is no longer enough. SACP makes the intermediate work auditable: what was claimed, what evidence supports it, who owns the next step, whether memory was promoted safely, and where human approval is required.
+[中文](./README.zh-CN.md) · [Quick start](#quick-start) · [Architecture](#architecture) · [Examples](./examples/README.md) · [Verification](#verification) · [Contributing](#contributing)
 
-It does not replace LangGraph, MCP, A2A, OpenClaw, or agent SDKs. It adds a small audit layer:
+## The Problem: What Does “Done” Prove?
 
 ```text
-When an agent says "done", it should produce a checkable work receipt.
+Done. All tests passed. Ready to publish.
 ```
 
-AgentOps Doctor is the first reference tool in this repo. Paste in messy agent output, and it returns a status code, claim findings, missing evidence, next owner, required fix, and a translated SACP receipt.
+That message combines several conclusions. Each needs its own evidence:
 
-## Why This Exists
+| Claim | What needs checking | Result when evidence is incomplete |
+|---|---|---|
+| “Tests passed.” | Referenced test or CI observations supporting the claim | `unverified` for the supported test-claim policy |
+| “The notification was delivered.” | A provider delivery event; `accepted` only means receipt of the request | `transport_accepted` while only acceptance is reported |
+| “The deployment is healthy.” | Health evidence matching the requested revision | Deployment finalization is blocked without matching health |
+| “This is approved.” | A current decision matching the input, scope, and execution context | Missing or stale approval prevents an authorized preflight |
 
-Modern agent failures often happen before the final answer:
+SACP separates **claims, observations, and authorization** so a local success or an accepted request does not silently become a stronger business conclusion. Its rules depend on the evidence supplied; trustworthy collection remains an integration responsibility.
 
-- a subagent accepts a task but loses the original goal;
-- a model claims tests passed without showing command output;
-- a memory item is promoted from inference to "verified fact";
-- a tool result is summarized without preserving evidence;
-- a handoff says "done" but leaves no owner for the next step.
+## Quick Start
 
-SACP turns these failures into auditable work records. The protocol is intentionally small: Markdown/YAML packets, local validators, dirty-run cases, and example receipts that can be inspected by humans and tools.
-
-## The Core Loop
-
-```mermaid
-flowchart LR
-    A[Agent claim: done] --> B{Evidence attached?}
-    B -- No --> C[Missing evidence]
-    B -- Yes --> D[AgentOps Doctor / validator]
-    D --> E{Approval boundary?}
-    E -- Yes --> F[Human or trusted-system decision]
-    E -- No --> G[Derive receipt]
-    F --> G
-    G --> H[Next owner and required fix]
-```
-
-SACP does not decide whether the underlying task is true by itself. It makes the claim, evidence, approval boundary, current status, and next owner visible enough for a human or trusted system to check.
-
-## Why OpenAI Models And Codex Matter
-
-SACP is model-agnostic, but OpenAI models and Codex are a natural testbed because coding agents already perform long-horizon work: reading files, editing code, running tests, delegating subtasks, and reporting completion. API credits would be used to turn this repo into a stronger open-source evaluation harness:
-
-- develop the reference implementation, validators, examples, and docs with Codex;
-- run GPT-based agent workflows and translate them into SACP receipts;
-- test failure modes such as memory drift, delegated task drift, missing evidence, and tool-use audit gaps;
-- compare baseline agent outputs against SACP-instrumented workflows;
-- publish reproducible logs, benchmark tasks, and cost summaries.
-
-See:
-
-- [Research proposal](./docs/research-proposal.md)
-- [OpenAI Codex Fund plan](./docs/openai-codex-fund-plan.md)
-
-Chinese version: [README.zh-CN.md](./README.zh-CN.md)
-
-## 3-Minute Quick Start
+Use Python **3.11 or 3.12**, the versions covered by the configured CI matrix. Run from the repository root:
 
 ```bash
 git clone https://github.com/aDragon0707/sacp.git
 cd sacp
-python agentops-doctor-skill/agentops_doctor.py agentops-doctor-skill/examples/done_but_no_receipt.md
+python -m pip install -r requirements-ci.txt
+python -m sacp_harness
 ```
 
-Expected output includes:
+The harness runs eight fixed synthetic breaker cases, then strictly validates the protocol examples and translated receipts. The current baseline prints:
 
 ```text
-status_code
-status_text
-receipt_completeness
-claim_findings
-memory_warning
-next_owner
-human_decision_required
-required_fix
-translated_receipt
+Breaker cases blocked: 8/8; false-success allowed: 0
+...
+## Protocol validator: 49/49 strict PASS (0 FAIL)
 ```
 
-Try a missing-evidence example:
+For example, S1 supplies a test-success claim without evidence and yields `unverified`; S2 supplies deployment acceptance without health and blocks finalization. These are reproducible boundary checks, not a population-level accuracy estimate. The command only prints by default; reports are written only with an explicit `--output-dir`.
+
+To see both allowed and blocked release decisions using local fixtures:
 
 ```bash
-python agentops-doctor-skill/agentops_doctor.py agentops-doctor-skill/examples/unsupported_test_claim.md
+python -m examples.github_release_gate
 ```
 
-Validate protocol examples:
+The example blocks missing approval, allows matching evidence and approval, and blocks an artifact from another commit. It does not publish a release or call GitHub.
+
+Continue with the [example guide](./examples/README.md) for a learning order, expected results, dependencies, and the distinction between runtime demos and protocol documents.
+
+## Architecture
+
+The runtime follows **Claim → Evidence → Verdict**: record separate inputs, derive a receipt, then apply a domain-specific gate.
+
+```mermaid
+flowchart TB
+    subgraph Inputs[Inputs with distinct source roles]
+        C[Agent claim]
+        H[Host observation]
+        P[Provider observation]
+        A[Authority decision]
+    end
+    C --> S[SQLite event store]
+    H --> S
+    P --> S
+    A --> S
+    S --> V[Verifier and evidence policy]
+    V --> R[Derived receipt: host / authority / external status]
+    R --> G[Domain gate: allow or block]
+    S --> Q[Reconciler: deadline and absence checks]
+    Q -->|Append recovery route and owner| S
+    T[Offline breaker harness] -. Tests .-> V
+    T -. Tests .-> G
+```
+
+| Input | Intended source | Meaning |
+|---|---|---|
+| `Claim` | Agent | What the agent says happened |
+| `HostObservation` | Host runtime or CI collector | Observed execution, test, or artifact data |
+| `ProviderObservation` | External-system adapter | What a provider reports: acceptance, delivery, health, failure |
+| `AuthorityDecision` | Human or trusted policy | Permission bound to a specific input, scope, context, and expiry |
+
+These source roles are a design contract. The current Python store API does **not** authenticate writers or prevent a caller with write access from fabricating observations.
+
+Three parts work together:
+
+- **Protocol:** [SACP/0.1](./SPEC.md), the [receipt format](./RECEIPT.md), and [validator](./validator.py) define and check exchange documents.
+- **Online reference engine:** [sacp_verify/](./sacp_verify/) stores events, derives multi-dimensional state, and exposes release, deployment, and refund gates. A caller invokes the reconciler to record missing attestations and bounded recovery routes.
+- **Offline harness:** [sacp_harness/](./sacp_harness/) checks fixed failure scenarios and protocol documents without model calls or live business actions.
+
+The runtime `DerivedReceipt` is a Python projection, not the `SACP/0.1` wire receipt. [CI receipt generation](./scripts/build_ci_receipt.py) constructs the protocol document separately. A CI `COMPLETE / 200` describes automated preflight; human approval, merge, and release authorization remain separate decisions.
+
+## Verification
+
+Reference results for code baseline [`e5fa2d8`](https://github.com/aDragon0707/sacp/commit/e5fa2d8b178fa9ee9b1969d434d7e3fb8f7d1746), checked locally on Windows with CPython 3.12.10:
+
+| Suite | Reference result | What it checks |
+|---|---|---|
+| `core` | 66 tests, zero failures or skips | Engine, gates, adapters, and CI tooling contracts |
+| `langgraph` | 7 tests, zero failures or skips | Real LangGraph wiring, checkpoint persistence, restart, and localhost HTTP integration |
+| `protocol` | 49 documents, strict PASS | Public YAML examples and translated receipts satisfy the validator |
+| `harness` | 8/8 breaker expectations met | Missing evidence, acceptance vs. completion, bounce, timeout routing, stale approval, and mock retry behavior |
+
+Reproduce the suites through one entry point. `.local/` is ignored; generated JSON stays out of tracked source files:
 
 ```bash
-python validator.py --examples --strict
+python scripts/run_tests.py --suite core --fail-on-skip --json .local/evidence/core.json
+python scripts/run_tests.py --suite protocol --fail-on-skip --json .local/evidence/protocol.json
+python scripts/run_tests.py --suite harness --fail-on-skip --json .local/evidence/harness.json
+
+# Optional LangGraph integration
+python -m pip install -r requirements-integration.txt
+python scripts/run_tests.py --suite langgraph --fail-on-skip --json .local/evidence/langgraph.json
 ```
 
-## Try It With Your Own Agent Output
+CI configures core checks on Ubuntu Python 3.11/3.12 and Windows Python 3.12, plus LangGraph integration on Ubuntu Python 3.12. The local reference results above do not substitute for a particular CI run.
 
-The fastest useful experiment is to save one real final answer, worklog, or handoff and run AgentOps Doctor on it:
+Read the numbers by their scope: protocol validation checks document conformance, and the harness checks a small synthetic set. The harness also invokes protocol validation, so these counts are not independent samples. Its `false_success_allowed` field counts unmet breaker expectations; `0` is not a measured real-world false-success rate. The report's `trace_view` column is explanatory text, not a benchmark of tracing products.
+
+## Integration Paths
+
+| Goal | Starting point | Current scope |
+|---|---|---|
+| Audit an existing response or handoff | [AgentOps Doctor](./agentops-doctor-skill/) | Local text heuristics; does not execute or independently verify the original task |
+| Gate a release | [GitHub fixture example](./examples/github_release_gate.py) and [payload adapter](./sacp_verify/github_actions.py) | Fixture / REST-shaped payload ingestion; not an authenticated GitHub collector |
+| Check deployment or refund completion | [Deployment example](./examples/deployment_verification.py), [refund example](./examples/refund_agent.py) | Mock providers and localhost experiments; no production deployment or money movement |
+| Add a workflow-engine seam | [LangGraph adapter](./sacp_verify/langgraph_adapter.py) and [tests](./tests/test_langgraph_adapter.py) | Real graph/checkpointer components with synthetic host observations and demo approval inputs |
+| Preserve long-running handoffs | [Receipt Chain](./SACP_RECEIPT_CHAIN.md) | Optional audit profile; scheduling remains with the caller |
+
+To audit a text file with Doctor:
 
 ```bash
-python agentops-doctor-skill/agentops_doctor.py path/to/your-agent-output.md
+python -X utf8 agentops-doctor-skill/agentops_doctor.py agentops-doctor-skill/examples/unsupported_test_claim.md
 ```
 
-Then open a GitHub issue with a sanitized copy if the diagnosis is wrong, incomplete, or catches a useful failure. Do not include secrets, customer data, private paths, or proprietary logs. The goal is one concrete failure case, not a star request.
+CI, tracing, and workflow engines remain useful sources of execution data and control. SACP adds explicit evidence requirements, completion conditions, and ownership at the handoff or business gate. For a task already fully covered by one existing CI check, an extra layer may add little value.
 
-Read the public-safe adoption case:
+## Maturity and Boundaries
 
-- [Longju SACP Runtime Guard](./ADOPTION_CASE_LONGJU.md)
+**Experimental alpha:** protocol, executable reference engine, deterministic harness, and integration experiments. There is no hosted SACP service or production-correctness guarantee.
 
-## Receipt Chain For Long-Running Agent Work
+- **Evidence trust:** types, references, and digests do not authenticate a producer. Current evidence policies cover specific claim types; unknown types do not universally fail closed.
+- **Storage and recovery:** the store API appends events; it is not tamper-proof storage. Reconciliation records routes and owners when called; it does not schedule work or execute retries and compensation. Its current absence path stops once any provider evidence exists, including acceptance alone.
+- **Business semantics:** gates require domain-specific review. The deployment gate does not itself enforce authorization; mock refund idempotency is process-local and does not provide durable exactly-once effects.
+- **PR automation:** read-only PR CI, default-branch receipt construction, and post-merge verification are implemented. Evidence artifacts remain untrusted; a PR can modify its runner. Independent job-result and current-head verification, broader policy checks, and real fork smoke coverage still need strengthening. Inspect automation changes directly.
+- **Dependencies:** the base engine uses Python's standard library, including SQLite. Protocol/CI tooling uses PyYAML; LangGraph integrations need the optional requirements file.
 
-Receipt Chain is an optional SACP profile for long-running work, multi-module work, multi-agent handoff, and cross-model continuation. It does not schedule agents. It preserves auditable work state between them.
+## Read Further
 
-Read: [SACP_RECEIPT_CHAIN.md](./SACP_RECEIPT_CHAIN.md), [Chinese version](./SACP_RECEIPT_CHAIN.zh-CN.md), [multi-agent project example](./examples/receipt_chain_multi_agent_project.yaml), and [research publish example](./examples/receipt_chain_research_publish.yaml).
+| Question | Entry point |
+|---|---|
+| What is the exchange contract? | [Spec](./SPEC.md), [Envelope](./ENVELOPE.md), [Receipt](./RECEIPT.md), [Status codes](./STATUS_CODES.md) |
+| How is state actually derived? | [Models](./sacp_verify/model.py), [evidence policy](./sacp_verify/policy.py), [verifier](./sacp_verify/verifier.py), [reconciler](./sacp_verify/reconciler.py) |
+| What are the failure cases? | [Executable breakers](./sacp_harness/run.py), [tests](./tests/), [protocol Dirty Run cases](./DIRTY_RUN_CASES.md) |
+| How are PRs reviewed? | [Maintainer workflow](./docs/maintainer-workflow.md) and [workflows](./.github/workflows/) |
+| What do receipt examples look like? | [Examples](./examples/), [sample corpus](./sample-corpus/), [Receipt Chain](./SACP_RECEIPT_CHAIN.md) |
 
-## Protocol Design References
+Some older status and design documents describe earlier milestones and are awaiting reconciliation with the executable baseline. Use the source, commands, and scoped results above when assessing current capabilities.
 
-SACP borrows protocol discipline from HTTP, Git, OpenTelemetry, MIME, and RFC-style normative wording, but stays a small audit protocol. See [PROTOCOL_DESIGN_REFERENCES.md](./PROTOCOL_DESIGN_REFERENCES.md).
+## Contributing
 
-## Local Demo Page
+Useful contributions include a reproducible false-completion case, a valid-success case that was incorrectly blocked, an adapter contract test, or a focused documentation correction. Include the expected result, actual result, code version, and a minimal reproduction.
 
-Open [sacp-demo.html](./sacp-demo.html) directly in a browser to see a static explanation of what SACP changes: raw completion claims become auditable receipts with evidence, next owner, and human decision boundaries.
+For agent-output samples, remove secrets, personal data, private paths, and proprietary logs before submitting. See [CONTRIBUTING.md](./CONTRIBUTING.md); protocol changes also need compatibility and failure-case review.
 
-Open [sacp-triage-editor.html](./sacp-triage-editor.html) to triage the current project into Now / Next / Later / Cut and copy the next Codex prompt.
+## License
 
-## Test Your Own Agent Output
-
-Save any final agent response, worklog, or handoff as a text file:
-
-```bash
-echo "Done. All tests passed. Ready to publish." > my-agent-output.md
-python agentops-doctor-skill/agentops_doctor.py my-agent-output.md
-```
-
-AgentOps Doctor does not execute the original task. It checks whether the output is auditable:
-
-- Did it claim completion without a receipt?
-- Did it claim tests passed without command output?
-- Did it promote memory without approval?
-- Did it identify the next owner?
-- Did it cross a human decision boundary?
-
-## What Is In This Repo
-
-```text
-SACP = protocol
-AgentOps Doctor = reference skill / CLI
-Dirty Run = adversarial state-discipline benchmark
-validator.py = local reference checker
-```
-
-Core docs:
-
-- [STATUS.md](./STATUS.md): current project status and community ask
-- [SPEC.md](./SPEC.md): protocol semantics
-- [ENVELOPE.md](./ENVELOPE.md): envelope fields and examples
-- [RECEIPT.md](./RECEIPT.md): receipt fields, micro receipt guidance, and examples
-- [STATUS_CODES.md](./STATUS_CODES.md): status codes
-- [DIRTY_RUN_CASES.md](./DIRTY_RUN_CASES.md): adversarial cases
-- [CONFORMANCE.md](./CONFORMANCE.md): conformance levels
-- [PROTOCOL_EVOLUTION.md](./PROTOCOL_EVOLUTION.md): how feedback becomes dirty cases, extensions, profiles, and core candidates
-- [JSON_SCHEMA_PLAN.md](./JSON_SCHEMA_PLAN.md): docs-only plan for v0.2 JSON Schema
-- [SACP_RECEIPT_CHAIN.md](./SACP_RECEIPT_CHAIN.md): optional profile for long-running, multi-agent work
-- [docs/OPENCLAW_LONGJU_ADAPTER_NOTE.md](./docs/OPENCLAW_LONGJU_ADAPTER_NOTE.md): docs-only OpenClaw / Longju adapter mapping
-- [docs/ADAPTER_NOTE_TEMPLATE.md](./docs/ADAPTER_NOTE_TEMPLATE.md): docs-only mapping template for agent frameworks
-- [docs/SACP_AGENT_TEST_PROMPT.md](./docs/SACP_AGENT_TEST_PROMPT.md): prompt for OpenClaw, herness, or another agent to test SACP
-- [docs/DUAL_AGENT_TRIAL_RUNBOOK.md](./docs/DUAL_AGENT_TRIAL_RUNBOOK.md): two-agent trial workflow and result table
-- [docs/DUAL_AGENT_TRIAL_RESULT_TEMPLATE.md](./docs/DUAL_AGENT_TRIAL_RESULT_TEMPLATE.md): coordinator template for comparing OpenClaw and herness reports
-- [agentops-doctor-skill/](./agentops-doctor-skill): one-command reference tool
-- [examples/](./examples): valid and dirty packets
-- [sample-corpus/](./sample-corpus): messy outputs translated into SACP receipts
-- [ADOPTION_CASE_LONGJU.md](./ADOPTION_CASE_LONGJU.md): public-safe local adoption case
-- [COMMUNITY_OUTREACH.md](./COMMUNITY_OUTREACH.md): community sharing and feedback prompts
-- [OUTBOUND_PR_PLAYBOOK.md](./OUTBOUND_PR_PLAYBOOK.md): maintainer outreach and docs-only PR playbook
-- [SOCIAL_LAUNCH_PACKET.md](./SOCIAL_LAUNCH_PACKET.md): X, Reddit, Hacker News, and Chinese community launch copy
-- [SACP_OUTBOUND_HANDOFF_2026-05-17.md](./SACP_OUTBOUND_HANDOFF_2026-05-17.md): continuation packet for outbound official PR work
-
-## Real Adoption Case
-
-SACP/0.1 has been tested as a local state layer for Longju, a single-agent operator running in an OpenClaw-style workspace.
-
-The adoption used a file-based `.sacp/` ledger and a runtime guard with four gates:
-
-```text
-PreTask -> ContextCheck -> PreExternalAction -> PostTask
-```
-
-The public-safe trials covered false completion, prompt injection, skill distillation, and duplicate handoffs:
-
-```text
-false completion      -> 412 missing_evidence
-prompt injection      -> human approval required
-skill distillation    -> candidate only, no automatic promotion
-duplicate handoff     -> 204 no_action_needed
-```
-
-Read the case study: [ADOPTION_CASE_LONGJU.md](./ADOPTION_CASE_LONGJU.md)
-
-## Concrete Example
-
-Raw agent output:
-
-```text
-Done. All tests passed. I saved the user preference to verified memory.
-```
-
-SACP breaks that into separate audit questions:
-
-```text
-1. "Done" without a receipt is not enough.
-2. "All tests passed" needs command output or evidence.
-3. "verified memory" requires human or trusted-system approval.
-```
-
-Likely diagnosis:
-
-```text
-412 missing_evidence
-required_fix: attach test output, downgrade unsupported claims, require human approval for memory promotion.
-```
-
-SACP is not about making the model smarter. It is about making agent work state, evidence, ownership, and decision boundaries explicit.
-
-## When To Use It
-
-- You are building an agent skill and want to check whether its output is acceptable.
-- You run multi-agent workflows and need handoff, attempt, receipt, and next-owner discipline.
-- You compare models or frameworks and want to audit their completion claims.
-- You collect hallucination, missing evidence, and memory-pollution examples.
-- You want AI work to move from chat logs toward auditable work records.
-
-## How To Contribute
-
-The most useful contributions are concrete:
-
-- Submit a messy agent output.
-- Report a bad AgentOps Doctor diagnosis.
-- Propose a Dirty Run case.
-- Add adapter notes for LangGraph, CrewAI, MCP, A2A, OpenClaw, or another framework.
-- Improve docs so new developers can run the project faster.
-
-Open an issue using the templates in this repo.
-
-See [CONTRIBUTING.md](./CONTRIBUTING.md).
-
-If you want to share the project with developer communities, see [COMMUNITY_OUTREACH.md](./COMMUNITY_OUTREACH.md).
-
-For a staged, consent-aware outreach process, see [OUTREACH_1000_PLAN.md](./OUTREACH_1000_PLAN.md). It tracks public projects and community contacts by use case and feedback state; it is not a list of scraped personal email addresses.
-
-## Boundary
-
-SACP helps agents produce auditable work receipts.
-
-It does not guarantee correctness.
-
-AgentOps Doctor audits the output. It does not execute the underlying task.
-
-SACP/0.1 is an experimental alpha. The next useful step is more messy outputs, adapter examples, and adversarial test cases.
+See [LICENSE](./LICENSE).
