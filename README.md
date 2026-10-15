@@ -1,174 +1,136 @@
 # SACP — Verify AI Agent Completion Claims
 
-**Turn “done” into a claim you can check against evidence.**
+**An agent says “done.” Should your workflow continue?**
 
-SACP (Scalable Audit and Control Protocol) is an experimental audit protocol and reference verification engine for AI agent work. It records what an agent claims, links the available evidence, and derives a status that downstream code can inspect before continuing.
+SACP (Scalable Audit and Control Protocol) makes completion conditions explicit: what the agent claims, which evidence supports it, what an external system reports, and who authorizes the next action. Its Python reference engine derives a verdict that a domain gate uses to allow or block continuation.
 
-[中文](./README.zh-CN.md) · [Quick start](#quick-start) · [Architecture](#architecture) · [Examples](./examples/README.md) · [Verification](#verification) · [Contributing](#contributing)
+**Experimental alpha:** an exchange protocol, executable reference engine and reproducible examples. Trustworthy evidence collection remains an integration responsibility.
 
-## The Problem: What Does “Done” Prove?
+[中文](./README.zh-CN.md) · [Quick start](#quick-start) · [Architecture](#architecture) · [PR workflow](#sacp-in-this-repository) · [Example guide](./examples/README.md)
 
-```text
-Done. All tests passed. Ready to publish.
-```
+## Where it helps
 
-That message combines several conclusions. Each needs its own evidence:
+Agent workflows often cross boundaries where similar-looking results mean different things:
 
-| Claim | What needs checking | Result when evidence is incomplete |
+| At the handoff | What still needs checking |
+|---|---|
+| “Tests passed; ready to release.” | Do the test and artifact evidence match this commit, and is this input approved? |
+| “The deployment request was accepted.” | Has the provider reported health for the same deployment and revision? |
+| “The notification was delivered.” | Is there matching delivery evidence, and has a later bounce changed the result? |
+| “The request timed out; retry it.” | Could the effect already have happened, and who owns reconciliation? |
+
+CI supplies execution results, tracing records observations, and workflow engines manage progress. SACP adds explicit evidence requirements, completion rules and recovery ownership at these handoffs. It is most useful when local execution, external completion and authorization differ.
+
+## One example: release preflight
+
+An agent wants to publish a release. The gate checks test evidence, artifact identity and approval together:
+
+| Supplied evidence | Gate result | Reason |
 |---|---|---|
-| “Tests passed.” | Referenced test or CI observations supporting the claim | `unverified` for the supported test-claim policy |
-| “The notification was delivered.” | A provider delivery event; `accepted` only means receipt of the request | `transport_accepted` while only acceptance is reported |
-| “The deployment is healthy.” | Health evidence matching the requested revision | Deployment finalization is blocked without matching health |
-| “This is approved.” | A current decision matching the input, scope, and execution context | Missing or stale approval prevents an authorized preflight |
+| Passing CI + matching artifact, no approval | Block | The action is not authorized |
+| Same evidence + matching current approval | Allow preflight | Evidence and authorization satisfy the release policy |
+| Approval present, artifact from another commit | Block | The evidence does not support this release |
 
-SACP separates **claims, observations, and authorization** so a local success or an accepted request does not silently become a stronger business conclusion. Its rules depend on the evidence supplied; trustworthy collection remains an integration responsibility.
+The allowed result means the preflight contract passed. Publishing remains the caller's action.
 
-## Quick Start
+## Quick start
 
-Use Python **3.11 or 3.12**, the versions covered by the configured CI matrix. Run from the repository root:
+Use Python **3.11 or 3.12**. Run the example above with local fixtures:
 
 ```bash
 git clone https://github.com/aDragon0707/sacp.git
 cd sacp
 python -m pip install -r requirements-ci.txt
-python -m sacp_harness
+python -m examples.github_release_gate
 ```
 
-The harness runs eight fixed synthetic breaker cases, three positive controls, then strictly validates the protocol examples and translated receipts. The current baseline prints:
+The three cases print `allowed=False`, `allowed=True`, then `allowed=False`. They make no GitHub requests and publish nothing.
+
+Then inspect the failure boundaries and valid-success controls:
+
+```bash
+python -m sacp_harness
+```
 
 ```text
 Breaker cases blocked: 8/8; false-success allowed: 0
 ...
+Positive controls passed: 3/3
+
 ## Protocol validator: 49/49 strict PASS (0 FAIL)
 ```
 
-For example, S1 supplies a test-success claim without evidence and yields `unverified`; S2 supplies deployment acceptance without health and blocks finalization. These are reproducible boundary checks, not a population-level accuracy estimate. The command only prints by default; reports are written only with an explicit `--output-dir`.
-
-To see both allowed and blocked release decisions using local fixtures:
-
-```bash
-python -m examples.github_release_gate
-```
-
-The example blocks missing approval, allows matching evidence and approval, and blocks an artifact from another commit. It does not publish a release or call GitHub.
-
-Continue with the [example guide](./examples/README.md) for a learning order, expected results, dependencies, and the distinction between runtime demos and protocol documents.
+The harness uses fixed synthetic scenarios without model calls. It prints by default; `--output-dir .local/harness` explicitly writes reports. Continue through the [example guide](./examples/README.md) for deployment, refund, recovery and optional LangGraph demos.
 
 ## Architecture
 
-The runtime follows **Claim → Evidence → Verdict**: record separate inputs, derive a receipt, then apply a domain-specific gate.
+The core path is **Claim → Evidence → Verdict → Gate**. Three layers make it usable and testable:
 
 ```mermaid
 flowchart TB
-    subgraph Inputs[Inputs with distinct source roles]
-        C[Agent claim]
-        H[Host observation]
-        P[Provider observation]
-        A[Authority decision]
+    subgraph Protocol[Protocol: define the exchange contract]
+        Spec[SACP/0.1 documents] --> Validator[Strict document validator]
     end
-    C --> S[SQLite event store]
-    H --> S
-    P --> S
-    A --> S
-    S --> V[Verifier and evidence policy]
-    V --> R[Derived receipt: host / authority / external status]
-    R --> G[Domain gate: allow or block]
-    S --> Q[Reconciler: deadline and absence checks]
-    Q -->|Append recovery route and owner| S
-    T[Offline breaker harness] -. Tests .-> V
-    T -. Tests .-> G
+    subgraph Online[Online engine: evaluate a workflow action]
+        Inputs[Claim / host evidence / provider report / authority] --> Verify[Evidence policy and verifier]
+        Verify --> Verdict[Derived state and evidence references]
+        Verdict --> Gate[Release / deployment / refund gate]
+        Verify --> Recovery[Reconciliation route and next owner]
+    end
+    subgraph Offline[Offline harness: verify explicit boundaries]
+        Cases[Breakers and positive controls]
+    end
+    Cases -. Exercise .-> Online
+    Cases -. Validate packets .-> Validator
 ```
 
-| Input | Intended source | Meaning |
-|---|---|---|
-| `Claim` | Agent | What the agent says happened |
-| `HostObservation` | Host runtime or CI collector | Observed execution, test, or artifact data |
-| `ProviderObservation` | External-system adapter | What a provider reports: acceptance, delivery, health, failure |
-| `AuthorityDecision` | Human or trusted policy | Permission bound to a specific input, scope, context, and expiry |
+The engine keeps claims, host observations, provider observations and authority decisions separate. Events are stored through an append-only SQLite API; new evidence can change the derived state without erasing history. Reconciliation records bounded recovery routes for callers to act on.
 
-These source roles are a design contract. The current Python store API does **not** authenticate writers or prevent a caller with write access from fabricating observations.
+The runtime `DerivedReceipt` is a Python projection. A `SACP/0.1` wire receipt is a separate exchange document; the CI builder constructs one for repository checks. Neither a valid document nor an approved action proves that an external effect succeeded.
 
-Three parts work together:
+See [architecture](./docs/architecture.md) for component responsibilities and [runtime contracts](./docs/runtime-contracts.md) for identity, authorization and recovery rules.
 
-- **Protocol:** [SACP/0.1](./SPEC.md), the [receipt format](./RECEIPT.md), and [validator](./validator.py) define and check exchange documents.
-- **Online reference engine:** [sacp_verify/](./sacp_verify/) stores events, derives multi-dimensional state, and exposes release, deployment, and refund gates. A caller invokes the reconciler to record missing attestations and bounded recovery routes.
-- **Offline harness:** [sacp_harness/](./sacp_harness/) checks fixed failure scenarios and protocol documents without model calls or live business actions.
+## SACP in this repository
 
-The runtime `DerivedReceipt` is a Python projection, not the `SACP/0.1` wire receipt. [CI receipt generation](./scripts/build_ci_receipt.py) constructs the protocol document separately. A CI `COMPLETE / 200` describes automated preflight; human approval, merge, and release authorization remain separate decisions.
+This repository applies the evidence-bound review pattern to its own pull requests:
 
-## Verification
-
-Reference results for code baseline [`1b76ff3`](https://github.com/aDragon0707/sacp/commit/1b76ff386d6091535aae94acbb7517c9170bd5d8), checked locally on Windows with CPython 3.12.10:
-
-| Suite | Reference result | What it checks |
-|---|---|---|
-| `core` | 100 tests, zero failures or skips | Engine, gates, adapters, concurrent SQLite recovery/idempotency, and CI tooling contracts |
-| `langgraph` | 7 tests, zero failures or skips | Real LangGraph wiring, checkpoint persistence, restart, and localhost HTTP integration |
-| `protocol` | 49 documents, strict PASS | Public YAML examples and translated receipts satisfy the validator |
-| `harness` | 8/8 breakers and 3/3 positive controls | Failure boundaries plus valid delivery, deployment health, and authorized mock refund |
-
-Reproduce the suites through one entry point. `.local/` is ignored; generated JSON stays out of tracked source files:
-
-```bash
-python scripts/run_tests.py --suite core --fail-on-skip --json .local/evidence/core.json
-python scripts/run_tests.py --suite protocol --fail-on-skip --json .local/evidence/protocol.json
-python scripts/run_tests.py --suite harness --fail-on-skip --json .local/evidence/harness.json
-
-# Optional LangGraph integration
-python -m pip install -r requirements-integration.txt
-python scripts/run_tests.py --suite langgraph --fail-on-skip --json .local/evidence/langgraph.json
+```text
+PR code → read-only CI → evidence artifacts
+        → trusted default-branch checks → SHA-bound SACP receipt
+        → maintainer review → manual squash merge → main revalidation
 ```
 
-CI configures core checks on Ubuntu Python 3.11/3.12 and Windows Python 3.12, plus LangGraph integration on Ubuntu Python 3.12. The local reference results above do not substitute for a particular CI run.
+The trusted collector independently checks GitHub job results, current PR identity and source fingerprints before receipt construction. Execution-definition changes require maintainer bootstrap review. `COMPLETE / 200` means automated preflight passed for the recorded SHA; maintainers still review semantics and authorize merging.
 
-Read the numbers by their scope: protocol validation checks document conformance, and the harness checks a small synthetic set. The harness also invokes protocol validation, so these counts are not independent samples. Its `false_success_allowed` field counts unmet breaker expectations; `0` is not a measured real-world false-success rate. The report's `trace_view` column is explanatory text, not a benchmark of tracing products.
+For a concrete record, [PR #22](https://github.com/aDragon0707/sacp/pull/22) passed preflight and was manually merged; [main verification 38669974026](https://github.com/aDragon0707/sacp/actions/runs/38669974026) then passed on merged commit [`48ba192`](https://github.com/aDragon0707/sacp/commit/48ba19209b7ea6f9d833193f92319cee0eed291a). The [verification record](./docs/verification-2026-10-15.md) also covers failing tests, a new PR SHA, workflow changes and protocol review warnings.
 
-## Integration Paths
+## Choose an entry point
 
-| Goal | Starting point | Current scope |
-|---|---|---|
-| Audit an existing response or handoff | [AgentOps Doctor](./agentops-doctor-skill/) | Local text heuristics; does not execute or independently verify the original task |
-| Gate a release | [GitHub fixture example](./examples/github_release_gate.py) and [payload adapter](./sacp_verify/github_actions.py) | Fixture / REST-shaped payload ingestion; not an authenticated GitHub collector |
-| Check deployment or refund completion | [Deployment example](./examples/deployment_verification.py), [refund example](./examples/refund_agent.py) | Mock providers and localhost experiments; no production deployment or money movement |
-| Add a workflow-engine seam | [LangGraph adapter](./sacp_verify/langgraph_adapter.py) and [tests](./tests/test_langgraph_adapter.py) | Real graph/checkpointer components with synthetic host observations and demo approval inputs |
-| Preserve long-running handoffs | [Receipt Chain](./SACP_RECEIPT_CHAIN.md) | Optional audit profile; scheduling remains with the caller |
-
-To audit a text file with Doctor:
-
-```bash
-python -X utf8 agentops-doctor-skill/agentops_doctor.py agentops-doctor-skill/examples/unsupported_test_claim.md
-```
-
-CI, tracing, and workflow engines remain useful sources of execution data and control. SACP adds explicit evidence requirements, completion conditions, and ownership at the handoff or business gate. For a task already fully covered by one existing CI check, an extra layer may add little value.
-
-## Maturity and Boundaries
-
-**Experimental alpha:** protocol, executable reference engine, deterministic harness, and integration experiments. There is no hosted SACP service or production-correctness guarantee.
-
-- **Evidence trust:** types, references, and digests do not authenticate a producer. Unknown claim types now fail closed; supported lifecycle intentions remain distinct from proven completion.
-- **Storage and recovery:** the store API appends events; it is not tamper-proof storage. Deadline checks continue after acceptance and serialize through SQLite. They record routes and owners; callers still supply scheduling, retries and compensation execution.
-- **Business semantics:** gates bind completion to one provider receipt and scope. Deployment exposes separate dispatch authorization and health checks. Mock refund keys persist within one SQLite database, including conflict and concurrency checks; this provides no end-to-end exactly-once guarantee. See [runtime contracts](./docs/runtime-contracts.md).
-- **PR automation:** trusted default-branch code independently checks GitHub jobs, current PR head, merge parents, source tree and test inventory before issuing receipts. Changed execution definitions require maintainer bootstrap review. Arbitrary PR code and tests still share a process; automated evidence cannot replace semantic review. Real fork end-to-end coverage remains outstanding; see [verification scope](./docs/verification-2026-10-15.md).
-- **Dependencies:** the base engine uses Python's standard library, including SQLite. Protocol/CI tooling uses PyYAML; LangGraph integrations need the optional requirements file.
-
-## Read Further
-
-| Question | Entry point |
+| Your goal | Start here |
 |---|---|
-| What is the exchange contract? | [Spec](./SPEC.md), [Envelope](./ENVELOPE.md), [Receipt](./RECEIPT.md), [Status codes](./STATUS_CODES.md) |
-| How is state actually derived? | [Models](./sacp_verify/model.py), [evidence policy](./sacp_verify/policy.py), [verifier](./sacp_verify/verifier.py), [reconciler](./sacp_verify/reconciler.py) |
-| How do the components fit together? | [Architecture](./docs/architecture.md), [runtime contracts](./docs/runtime-contracts.md), [development](./docs/development.md) |
-| What are the failure cases? | [Executable breakers](./sacp_harness/run.py), [tests](./tests/), [protocol Dirty Run cases](./DIRTY_RUN_CASES.md) |
-| How are PRs reviewed? | [Maintainer workflow](./docs/maintainer-workflow.md) and [workflows](./.github/workflows/) |
-| What do receipt examples look like? | [Examples](./examples/), [sample corpus](./sample-corpus/), [Receipt Chain](./SACP_RECEIPT_CHAIN.md) |
+| Understand or extend the exchange contract | [SACP/0.1 spec](./SPEC.md), [receipt format](./RECEIPT.md) |
+| Add evidence checks to a workflow | [Example guide](./examples/README.md), [reference engine](./sacp_verify/), [LangGraph adapter](./sacp_verify/langgraph_adapter.py) |
+| Evaluate release, deployment or refund conditions | [Release](./examples/github_release_gate.py), [deployment](./examples/deployment_verification.py), [refund](./examples/refund_agent.py) |
+| Audit an existing text response or handoff | [AgentOps Doctor](./agentops-doctor-skill/): local heuristics, without rerunning the task |
+| Preserve long-running handoffs | [Receipt Chain](./SACP_RECEIPT_CHAIN.md): optional audit profile |
 
-[STATUS](./STATUS.md) describes current capabilities and [ROADMAP](./ROADMAP.md) separates hardening from future work. Earlier research notes and saved reports are historical evidence, not current test results.
+## Verification and current boundaries
 
-## Contributing
+The linked main run verifies 100 core tests on each of Ubuntu Python 3.11/3.12 and Windows Python 3.12, seven LangGraph tests, 49 strict-valid protocol documents, and eight harness breakers plus three positive controls, with zero failures, errors or skips. These overlapping checks are scoped regression evidence, not independent samples or a production accuracy estimate. `false-success allowed: 0` applies only to the fixed breaker set.
 
-Useful contributions include a reproducible false-completion case, a valid-success case that was incorrectly blocked, an adapter contract test, or a focused documentation correction. Include the expected result, actual result, code version, and a minimal reproduction.
+- **Evidence sources:** the Python store does not authenticate writers. Payload adapters require trusted collection and access control from the integration.
+- **Execution:** providers are mocked or localhost experiments. Callers own scheduling, real side effects, retries and compensation; there is no hosted service or end-to-end exactly-once guarantee.
+- **PR trust:** application code and tests still share a process. Semantic review remains necessary; actual fork E2E coverage is unverified. There is no automated approval, repair or merge.
 
-For agent-output samples, remove secrets, personal data, private paths, and proprietary logs before submitting. See [CONTRIBUTING.md](./CONTRIBUTING.md); protocol changes also need compatibility and failure-case review.
+The base engine uses Python's standard library; protocol/CI tooling requires PyYAML, and LangGraph has explicit optional dependencies. See [STATUS](./STATUS.md), [verification scope](./docs/verification-2026-10-15.md) and [ROADMAP](./ROADMAP.md) for the full boundaries.
+
+## Documentation and contributing
+
+- **Understand:** [Architecture](./docs/architecture.md) · [Evidence model](./docs/evidence-model.md) · [State projection](./docs/state-machine.md)
+- **Run and develop:** [Examples](./examples/README.md) · [Development and suite commands](./docs/development.md) · [Runtime contracts](./docs/runtime-contracts.md)
+- **Review and extend:** [Maintainer workflow](./docs/maintainer-workflow.md) · [Dirty Run cases](./DIRTY_RUN_CASES.md) · [Contributing](./CONTRIBUTING.md)
+
+Useful contributions include a reproducible false-completion case, a valid-success case that was incorrectly blocked, an adapter contract test, or a focused documentation correction. Include the expected and actual results, code version and minimal reproduction. Remove secrets, personal data and proprietary logs before submitting examples.
 
 ## License
 
