@@ -51,7 +51,7 @@ def payload(approval: bool = True, artifact_commit: str = "abc123") -> dict:
 def run(label: str, data: dict) -> None:
     store = EventStore()
     try:
-        GitHubActionsPayloadAdapter(store).ingest_release(data)
+        GitHubActionsPayloadAdapter(store, authorized_reviewers={"release-manager"}).ingest_release(data)
         decision = ReleaseGate(store, Verifier(store)).can_proceed(data["action_id"], now=BASE)
         print(f"{label}: allowed={decision.allowed}, reason={decision.reason}, overall={decision.receipt.overall_status}")
     finally:
