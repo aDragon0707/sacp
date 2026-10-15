@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
-from typing import Any
+from datetime import datetime, timedelta, timezone
+from typing import Any, Iterable
 
 from .model import AuthorityDecision, Claim, HostObservation, ProviderObservation
 from .store import EventStore
@@ -116,10 +116,15 @@ class GitHubActionsFixtureAdapter:
 
 
 class GitHubActionsPayloadAdapter:
-    """Map GitHub REST-shaped payloads into the same evidence model as fixtures."""
+    """Map supplied REST payloads; authenticate collection outside this adapter.
 
-    def __init__(self, store: EventStore) -> None:
+    Reviewer identities must come from trusted caller configuration, not payload
+    fields. The default empty allowlist cannot authorize a release.
+    """
+
+    def __init__(self, store: EventStore, *, authorized_reviewers: Iterable[str] = ()) -> None:
         self.store = store
+        self.authorized_reviewers = frozenset(authorized_reviewers)
 
     def ingest_release(self, payload: dict[str, Any]) -> dict[str, str]:
         required = (
@@ -224,19 +229,28 @@ class GitHubActionsPayloadAdapter:
         )
         approval_event = ""
         reviews = payload.get("reviews", [])
-        if reviews and isinstance(reviews[0], list):
-            reviews = [review for page in reviews for review in page]
+        reviews = [review for page in reviews for review in (page if isinstance(page, list) else [page])]
+        latest = {}
         for review in reviews:
-            if review.get("state") != "APPROVED" or review.get("commit_id") != commit:
+            reviewer = review.get("user", {}).get("login")
+            if reviewer not in self.authorized_reviewers or review.get("state") not in {"APPROVED", "CHANGES_REQUESTED", "DISMISSED"}:
                 continue
-            reviewer = review.get("user", {}).get("login", "github-reviewer")
+            order = (_parse_time(review.get("submitted_at", payload["observed_at"])), int(review.get("id", 0)), review["state"] != "APPROVED")
+            if reviewer not in latest or order > latest[reviewer][0]:
+                latest[reviewer] = (order, review)
+        decisions = [(reviewer, pair[1]) for reviewer, pair in latest.items() if pair[1].get("commit_id") == commit]
+        vetoes = [(reviewer, review) for reviewer, review in decisions if review["state"] != "APPROVED"]
+        approvals = [(reviewer, review) for reviewer, review in decisions if review["state"] == "APPROVED"]
+        effective = vetoes or approvals
+        if effective:
+            reviewer, review = sorted(effective)[0]
             expires_at = _parse_time(
                 payload.get("approval_expires_at", (observed_at + timedelta(hours=1)).isoformat())
             )
             approval_event = self.store.record_authority_decision(
                 AuthorityDecision(
                     action_id=action_id,
-                    decision="approved",
+                    decision="denied" if vetoes else "approved",
                     owner=f"github-review:{reviewer}",
                     input_digest=payload["input_digest"],
                     action_scope=payload["action_scope"],
@@ -245,7 +259,6 @@ class GitHubActionsPayloadAdapter:
                     **common,
                 )
             )
-            break
         return {
             "check_event": check_event,
             "artifact_event": artifact_event,
@@ -256,4 +269,4 @@ class GitHubActionsPayloadAdapter:
 
 def _parse_time(value: str) -> datetime:
     parsed = datetime.fromisoformat(value)
-    return parsed
+    return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)

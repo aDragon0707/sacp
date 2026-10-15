@@ -8,10 +8,10 @@ from sacp_verify import EventStore, GitHubActionsPayloadAdapter, ReleaseGate, Ve
 
 
 class GitHubPayloadAdapterTests(unittest.TestCase):
-    def evaluate(self, data: dict):
+    def evaluate(self, data: dict, reviewers=("release-manager",)):
         store = EventStore()
         self.addCleanup(store.close)
-        GitHubActionsPayloadAdapter(store).ingest_release(data)
+        GitHubActionsPayloadAdapter(store, authorized_reviewers=reviewers).ingest_release(data)
         return ReleaseGate(store, Verifier(store)).can_proceed(data["action_id"], now=BASE)
 
     def test_api_payload_without_review_blocks(self) -> None:
@@ -53,6 +53,35 @@ class GitHubPayloadAdapterTests(unittest.TestCase):
         ]
         decision = self.evaluate(data)
         self.assertTrue(decision.allowed)
+
+    def test_no_trusted_reviewers_means_no_authority(self):
+        self.assertFalse(self.evaluate(payload(), reviewers=()).allowed)
+
+    def test_untrusted_review_cannot_grant_authority(self):
+        data = payload()
+        data["reviews"][0]["user"]["login"] = "random-contributor"
+        self.assertFalse(self.evaluate(data).allowed)
+
+    def test_latest_changes_requested_or_dismissal_revokes_prior_approval(self):
+        for state in ("CHANGES_REQUESTED", "DISMISSED"):
+            data = payload()
+            data["reviews"].append({"id": 3002, "state": state, "commit_id": "abc123", "submitted_at": (BASE + timedelta(seconds=1)).isoformat(), "user": {"login": "release-manager"}})
+            self.assertFalse(self.evaluate(data).allowed)
+
+    def test_new_approval_after_changes_requested_can_authorize(self):
+        data = payload()
+        data["reviews"].insert(0, {"id": 3000, "state": "CHANGES_REQUESTED", "commit_id": "abc123", "submitted_at": (BASE - timedelta(seconds=1)).isoformat(), "user": {"login": "release-manager"}})
+        self.assertTrue(self.evaluate(data).allowed)
+
+    def test_approval_for_old_commit_does_not_authorize_new_commit(self):
+        data = payload()
+        data["reviews"][0]["commit_id"] = "old-commit"
+        self.assertFalse(self.evaluate(data).allowed)
+
+    def test_other_authorized_reviewer_changes_requested_vetoes_approval(self):
+        data = payload()
+        data["reviews"].append({"state": "CHANGES_REQUESTED", "commit_id": "abc123", "user": {"login": "security-reviewer"}})
+        self.assertFalse(self.evaluate(data, reviewers=("release-manager", "security-reviewer")).allowed)
 
 
 if __name__ == "__main__":

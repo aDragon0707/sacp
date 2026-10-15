@@ -28,4 +28,6 @@ Mock refund reservations and accepted observations commit atomically in the same
 
 ## Migration
 
+The GitHub payload adapter takes `authorized_reviewers` from trusted constructor configuration; an empty list grants no authority. The latest effective review per authorized reviewer supersedes prior approval, and current-head changes requested or dismissal vetoes approval. Payload collection and reviewer permissions still need authenticated integration. The CLI requires repeated `--authorized-reviewer` flags and uses wall time; `--now` explicitly enables deterministic fixture replay.
+
 These changes tighten the experimental Python contracts; they add no SACP/0.1 wire fields. Callers relying on unknown claim pass-through, cross-receipt success, acceptance ending reconciliation, or historical-time refund checks must migrate. The optional `ReconciliationEvent.claim_ref` is a runtime field, not a core protocol field. Existing SQLite event tables remain readable; the mock reservation table is created alongside them. Historical mock observations without reservations cannot retroactively prove durable idempotency.
