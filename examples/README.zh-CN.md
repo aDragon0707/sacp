@@ -42,7 +42,7 @@ Harness 检查 8 个固定反例，并校验公开协议示例和转写 receipt�
 
 建议顺序：发布 gate → 发布生命周期 → 部署 → 有界恢复 → 账本重开。想理解领域完成条件与幂等时，再看退款。
 
-恢复 demo 记录路线，不执行实际重试或补偿。账本重开示例关闭并重建对象，不是操作系统级 crash test。Mock 退款 ID 仅在进程内保持，不提供持久化 exactly-once 保证。部署健康检查与动作授权也是不同职责。
+恢复 demo 记录路线，不执行实际重试或补偿。账本重开示例关闭并重建对象，不是操作系统级 crash test。Mock 退款 ID 在同一个 SQLite 数据库内跨重启、并发连接保持，不提供端到端 exactly-once 保证。部署健康检查与动作授权是不同职责；dispatch 前使用 `can_dispatch` 强制批准。Payload demo 显式配置了可信 reviewer fixture。
 
 ## 可选 LangGraph Demo
 

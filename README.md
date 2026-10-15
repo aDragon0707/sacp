@@ -34,7 +34,7 @@ python -m pip install -r requirements-ci.txt
 python -m sacp_harness
 ```
 
-The harness runs eight fixed synthetic breaker cases, then strictly validates the protocol examples and translated receipts. The current baseline prints:
+The harness runs eight fixed synthetic breaker cases, three positive controls, then strictly validates the protocol examples and translated receipts. The current baseline prints:
 
 ```text
 Breaker cases blocked: 8/8; false-success allowed: 0
@@ -98,14 +98,14 @@ The runtime `DerivedReceipt` is a Python projection, not the `SACP/0.1` wire rec
 
 ## Verification
 
-Reference results for code baseline [`e5fa2d8`](https://github.com/aDragon0707/sacp/commit/e5fa2d8b178fa9ee9b1969d434d7e3fb8f7d1746), checked locally on Windows with CPython 3.12.10:
+Reference results for code baseline [`1b76ff3`](https://github.com/aDragon0707/sacp/commit/1b76ff386d6091535aae94acbb7517c9170bd5d8), checked locally on Windows with CPython 3.12.10:
 
 | Suite | Reference result | What it checks |
 |---|---|---|
-| `core` | 66 tests, zero failures or skips | Engine, gates, adapters, and CI tooling contracts |
+| `core` | 100 tests, zero failures or skips | Engine, gates, adapters, concurrent SQLite recovery/idempotency, and CI tooling contracts |
 | `langgraph` | 7 tests, zero failures or skips | Real LangGraph wiring, checkpoint persistence, restart, and localhost HTTP integration |
 | `protocol` | 49 documents, strict PASS | Public YAML examples and translated receipts satisfy the validator |
-| `harness` | 8/8 breaker expectations met | Missing evidence, acceptance vs. completion, bounce, timeout routing, stale approval, and mock retry behavior |
+| `harness` | 8/8 breakers and 3/3 positive controls | Failure boundaries plus valid delivery, deployment health, and authorized mock refund |
 
 Reproduce the suites through one entry point. `.local/` is ignored; generated JSON stays out of tracked source files:
 
@@ -145,10 +145,10 @@ CI, tracing, and workflow engines remain useful sources of execution data and co
 
 **Experimental alpha:** protocol, executable reference engine, deterministic harness, and integration experiments. There is no hosted SACP service or production-correctness guarantee.
 
-- **Evidence trust:** types, references, and digests do not authenticate a producer. Current evidence policies cover specific claim types; unknown types do not universally fail closed.
-- **Storage and recovery:** the store API appends events; it is not tamper-proof storage. Reconciliation records routes and owners when called; it does not schedule work or execute retries and compensation. Its current absence path stops once any provider evidence exists, including acceptance alone.
-- **Business semantics:** gates require domain-specific review. The deployment gate does not itself enforce authorization; mock refund idempotency is process-local and does not provide durable exactly-once effects.
-- **PR automation:** read-only PR CI, default-branch receipt construction, and post-merge verification are implemented. Evidence artifacts remain untrusted; a PR can modify its runner. Independent job-result and current-head verification, broader policy checks, and real fork smoke coverage still need strengthening. Inspect automation changes directly.
+- **Evidence trust:** types, references, and digests do not authenticate a producer. Unknown claim types now fail closed; supported lifecycle intentions remain distinct from proven completion.
+- **Storage and recovery:** the store API appends events; it is not tamper-proof storage. Deadline checks continue after acceptance and serialize through SQLite. They record routes and owners; callers still supply scheduling, retries and compensation execution.
+- **Business semantics:** gates bind completion to one provider receipt and scope. Deployment exposes separate dispatch authorization and health checks. Mock refund keys persist within one SQLite database, including conflict and concurrency checks; this provides no end-to-end exactly-once guarantee. See [runtime contracts](./docs/runtime-contracts.md).
+- **PR automation:** trusted default-branch code independently checks GitHub jobs, current PR head, merge parents, source tree and test inventory before issuing receipts. Changed execution definitions require maintainer bootstrap review. Arbitrary PR code and tests still share a process; automated evidence cannot replace semantic review. Real fork end-to-end coverage remains outstanding; see [verification scope](./docs/verification-2026-10-15.md).
 - **Dependencies:** the base engine uses Python's standard library, including SQLite. Protocol/CI tooling uses PyYAML; LangGraph integrations need the optional requirements file.
 
 ## Read Further
@@ -157,11 +157,12 @@ CI, tracing, and workflow engines remain useful sources of execution data and co
 |---|---|
 | What is the exchange contract? | [Spec](./SPEC.md), [Envelope](./ENVELOPE.md), [Receipt](./RECEIPT.md), [Status codes](./STATUS_CODES.md) |
 | How is state actually derived? | [Models](./sacp_verify/model.py), [evidence policy](./sacp_verify/policy.py), [verifier](./sacp_verify/verifier.py), [reconciler](./sacp_verify/reconciler.py) |
+| How do the components fit together? | [Architecture](./docs/architecture.md), [runtime contracts](./docs/runtime-contracts.md), [development](./docs/development.md) |
 | What are the failure cases? | [Executable breakers](./sacp_harness/run.py), [tests](./tests/), [protocol Dirty Run cases](./DIRTY_RUN_CASES.md) |
 | How are PRs reviewed? | [Maintainer workflow](./docs/maintainer-workflow.md) and [workflows](./.github/workflows/) |
 | What do receipt examples look like? | [Examples](./examples/), [sample corpus](./sample-corpus/), [Receipt Chain](./SACP_RECEIPT_CHAIN.md) |
 
-Some older status and design documents describe earlier milestones and are awaiting reconciliation with the executable baseline. Use the source, commands, and scoped results above when assessing current capabilities.
+[STATUS](./STATUS.md) describes current capabilities and [ROADMAP](./ROADMAP.md) separates hardening from future work. Earlier research notes and saved reports are historical evidence, not current test results.
 
 ## Contributing
 

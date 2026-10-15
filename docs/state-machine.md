@@ -1,94 +1,47 @@
-# 保守状态机
+# 保守状态投影
 
-## 三个独立维度
+本页描述当前 Python 代码，不把设计目标当作已实现状态。源码：[verifier](../sacp_verify/verifier.py)、[lifecycle](../sacp_verify/lifecycle.py)、[reconciler](../sacp_verify/reconciler.py)。精确接入约束见[运行时契约](./runtime-contracts.md)。
 
-不要把所有事情压进一个 `status`：
+## 四个读取维度
 
-```text
-host_status       本地执行是否有合格观察
-authority_status  是否获得当前 action 的授权
-external_status   provider 报告了什么
-overall_status    由前三者派生的下一步判断
+| 字段 | 当前取值 |
+|---|---|
+| `host_status` | `not_observed`, `unverified`, `completed`, `failed` |
+| `authority_status` | `not_required`, `pending`, `mismatched`, `expired`, `denied`, `approved` |
+| `external_status` | `not_attempted`, `transport_accepted`, `provider_reported_delivered`, `provider_reported_healthy`, `refund_succeeded`, `bounced`, `provider_error`, `counterparty_declined`, `undelivered`, `attestation_timed_out`, `deployment_rolled_back`, `deployment_failed`, `refund_failed`, `provider_conflict` |
+| `overall_status` | `unknown`, `unverified`, `host_failed`, `needs_approval`, `authority_denied`, `ready_for_external_action`, `host_completed`, `authority_violation`，或派生的 external 状态 |
+
+`status` 只是 `overall_status` 的兼容别名。`retry`、`compensation`、`human_review` 属于 `recovery_route`，不是 overall status。实现没有 `externally_verified` 或 `dispatched_unverified` 状态。
+
+## 一次执行的生命周期
+
+```mermaid
+flowchart LR
+    Claim[Claim] --> Evidence{引用与策略满足?}
+    Evidence -->|否| Unverified[unverified]
+    Evidence -->|是| Authority{需要且具备授权?}
+    Authority --> Ready[ready_for_external_action]
+    Ready --> Accepted[transport_accepted]
+    Accepted --> Terminal[匹配的 delivery / health / refund 终态]
+    Accepted --> Deadline[deadline 后继续有界检查]
+    Terminal --> Negative[后续 bounce / failure / rollback 可降级]
+    Deadline --> Route[retry / compensation / human_review 路线]
 ```
 
-例如：
+图为典型路径；并非所有领域都要求相同授权或宿主检查。Gate 再按具体领域判断 allow/block，不能仅凭图或一个 status 决定业务动作。
 
-```yaml
-host_status: completed
-authority_status: approved
-external_status: not_attempted
-overall_status: ready_for_external_action
-```
+Provider 聚合单位为 `(action_id, provider, receipt_id)`。同一次执行中，负向终态优先于正向终态，不受回调到达顺序影响。重试的新 receipt 以最新 accepted 时间选择当前执行；不同 provider 或同时间的多个 accepted 身份不明确时，保持 `provider_conflict`。适配器必须规范化 provider 时钟，改变输入/作用域时应使用新 action ID。
 
-这表示“本地准备完成且获得授权，可以尝试外部动作”，不表示外部动作已经成功。
+只有 accepted 不足以派生 delivered、healthy 或 refund succeeded。终态必须与 accepted 的身份及领域 metadata 匹配；旧 receipt 的成功不能与新执行拼接。后续新执行成功可以收敛，但旧失败历史不会被删除。
 
-## 正常路径
+## 授权与失败优先级
 
-```text
-dispatch_intended
-  → dispatched_unverified
-  → transport_accepted
-  → provider_reported_delivered
-  → externally_verified
-```
+未知引用、未知 claim policy 或不匹配证据保持 `unverified`。授权绑定 thread、run、checkpoint、input、scope 和 expiry。需要授权的 action 已有外部 observation 而授权不满足时，派生 `authority_violation`；这不是对外部事实的否认，而是权限违规。
 
-每一步都需要新的、来源更强的 observation，不是同义词。
+`DeploymentGate.can_dispatch` 单独负责 dispatch 前授权。`can_finalize` 保留无 authority-required claim 时的健康观察接口，可用 `require_authority=True` 强制授权。退款 finalize 同时核对当前授权、claim scope、同一次 accepted+succeeded，且失败不能被旧成功覆盖。
 
-## 异常和等待状态
+## 有界对账
 
-```text
-provider_error
-undelivered
-bounced
-counterparty_declined
-attestation_timed_out
-needs_human_review
-authority_violation
-```
+有 deadline 和 owner 的 claim 到期后，完全无 witness 或只有 accepted 都会继续检查匹配终态。一次 claim/attempt 只追加一次 absence；SQLite 事务串行化并发调用。预算耗尽后交给 compensation owner；未配置时转 `human_review`。匹配终态清除投影中的待办路线，历史仍保留。
 
-`unverified` 和 `dispatched_unverified` 表示宿主记录了 dispatch，但还没有足够 provider 事实。它们不是成功，也不是对方拒绝。
-
-## 投影规则
-
-1. Provider 只有 `accepted` 时，`external_status` 最多是 `transport_accepted`，`overall_status` 也不得升级为 delivered。
-2. 只有 provider-authored delivery event 才能派生 `provider_reported_delivered`。
-3. `accepted → delivered → bounced` 时，当前投影必须降级或暴露矛盾，不能永久保持 `delivered`。
-4. HTTP `400`、`401`、credential failure 或 conversation missing 不能派生 `counterparty_declined`。
-5. 本地 exit code 为 0 不能单独派生 `deployed`、`payment_settled` 或 `delivered`。
-6. 缺少足够外部 witness 时，不能生成外部成功终态。
-7. 新 observation 可以改变当前 projection，但不能改写历史 observation。
-8. 任何 pending 状态都必须有 `attestation_deadline`、`reconciliation_owner` 和后续动作。
-9. timeout 后只能进入 retry、compensation 或 human review 路径，不能静默当作失败或成功。
-10. `status` 仅作为 `overall_status` 的兼容别名；新代码应读取三个维度和 `overall_status`。
-11. 需要授权的 action 如果在 `authority_status != approved` 时已经产生外部 observation，`overall_status` 必须是 `authority_violation`，不能被外部状态覆盖。
-
-部署动作另有一条外部效果路径：`deployment_accepted` 不等于 `deployment_healthy`；health observation 必须绑定相同 revision；后续 rollback 可以降级此前的健康投影。
-
-这条路径应优先复用 Argo Rollouts、Flagger 或目标平台已有的 health/rollback 事件。SACP 负责验证这些事件与当前 action/revision 的关联，并决定是否允许最终化，不负责替代 deployment controller。
-
-## Reconciliation 生命周期
-
-```text
-mint dispatch scope
-  → schedule next_check_at
-  → record attested / absent / provider_error
-  → re-arm bounded checks
-  → derive attestation_timed_out
-  → route retry / compensation / human review
-```
-
-`attestation_deadline`、`reconciliation_owner` 和首次 `next_check_at` 应在 action scope 创建时固定。检查“没有找到证据”本身也要写成 reconciliation event。
-
-## Authority 边界
-
-Approval 必须绑定：
-
-```text
-thread_id + run_id + checkpoint_id + input_digest + action_scope + expiry
-```
-
-绑定不匹配时，即使存在 `approved` 记录，也不能授权当前 action。
-
-## Retry 和补偿
-
-所有可能产生外部副作用的动作都需要 `action_id`、`idempotency_key`、provider request/receipt ID、retry count、compensation owner 和明确的重复执行策略。系统不能把“本地未知”自动变成“安全重试”。
+Reconciler 不调度、不远端查询、不执行重试或补偿。`retry` 是下一次检查/恢复路线，不是安全重发的证明。缺少 deadline 或 owner 的 claim 不参与自动对账；接入方必须补齐这些配置。`now` 用于 deadline/expiry 判断，不是历史数据库的 as-of 查询。

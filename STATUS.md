@@ -1,62 +1,36 @@
-# Current Status
+# Current status
 
-Date: 2026-05-25
+Updated: 2026-10-15. **Experimental alpha.** SACP/0.1 remains the exchange contract; the repository now also includes an executable reference engine, adapters, harness and CI governance.
 
-SACP/0.1 is frozen for feedback.
+Start with [README](./README.md) / [中文](./README.zh-CN.md), then [architecture](./docs/architecture.md), [development](./docs/development.md) and [maintainer workflow](./docs/maintainer-workflow.md). Historical research and corpus notes describe their original trials, not the current executable baseline.
 
-## What Exists Now
+## Implemented and bounded
 
-- SACP/0.1 text-first spec, envelope, receipt, status codes, lifecycle, validator, conformance notes, and Dirty Run cases.
-- Dirty Run benchmark: 10 spec cases for state, evidence, memory, lease, completion, and next-owner discipline.
-- Sample corpus: 33 messy or review outputs translated into SACP receipts.
-  - Batch 001: 10 real workflow/worklog excerpts.
-  - Batch 002: 20 natural dirty outputs from DeepSeek, Qwen, GLM, and Kimi across 5 dirty tasks.
-  - Review notes 031-033: local protocol review, designer feedback, and Codex self-use feedback receipts.
-- AgentOps Doctor: local reference skill / CLI works from source.
-- Receipt Chain: optional profile documented with multi-agent and research-publish examples.
-- Protocol Design References: HTTP, Git, OpenTelemetry, MIME, and RFC-style wording are the default guidance for protocol boundaries.
-- Local static demo page: `sacp-demo.html` explains SACP's audit value without a backend.
-- Local triage editor: `sacp-triage-editor.html` turns project state into a copyable next-round Codex prompt.
-- JSON Schema plan: docs-only v0.2 route lives in `JSON_SCHEMA_PLAN.md`.
-- First docs-only adapter note: `docs/OPENCLAW_LONGJU_ADAPTER_NOTE.md` maps an OpenClaw-style / Longju local record into a SACP receipt.
-- Dual-agent trial result template: `docs/DUAL_AGENT_TRIAL_RESULT_TEMPLATE.md` is ready for OpenClaw / herness report comparison.
-- Community materials: issue templates, contribution guide, outreach templates, and a public-safe adoption case.
-- Outbound PR playbook for docs-only receipt examples, adapter notes, and dirty cases.
+| Area | Present now | Boundary |
+|---|---|---|
+| Protocol | Spec, envelope, receipt, validator, status codes, conformance, Receipt Chain profile | Document validity does not prove task truth; no JSON Schema release yet |
+| Runtime | Claims/host/provider/authority events, SQLite persistence, evidence policy, derived receipts | Caller-trusted write API; no authentication or tamper-proof database |
+| Domain gates | Release preflight, deployment health + explicit dispatch authority, refund completion | Supplied provider facts; no real deployment, release or payment execution |
+| Recovery | Deadline checks after missing or accepted-only evidence, bounded routes, SQLite serialization | Caller invokes checks; no scheduler or compensation executor |
+| Mock idempotency | Same-database refund reservations, conflict rejection, restart and concurrent calls | Simulated effect identity, not end-to-end exactly-once |
+| Adapters | REST-shaped GitHub payload mapping, trusted reviewer allowlist, CLI, real LangGraph wiring/checkpointers | Payload source authentication remains an integration responsibility |
+| HTTP experiments | Real localhost provider transport, simulated health/rollback | No public SACP API or production provider |
+| Harness | Eight synthetic breakers and three positive controls | Fixed small set; no measured population accuracy |
+| Governance | Read-only PR CI, trusted independent attestation, formal receipt, manual squash merge, main revalidation | Semantic review required; real fork E2E still outstanding |
+| Corpus and Doctor | 34 translated receipts, YAML examples, local text-audit CLI | Historical/synthetic inputs; Doctor uses heuristics and does not rerun tasks |
 
-## Not Packaged Yet
+## Verification baseline
 
-- No `pip install sacp` package yet.
-- No JSON Schema yet.
-- No hosted service, database, HTTP binding, or runtime framework adapter yet.
-- No guarantee of task correctness. SACP audits claims, evidence, ownership, and decision boundaries.
+Code baseline [1b76ff3](https://github.com/aDragon0707/sacp/commit/1b76ff386d6091535aae94acbb7517c9170bd5d8): 100 core tests, 7 LangGraph tests, 49 strict protocol documents, 8 breakers and 3 positive controls. Core CI covers Ubuntu Python 3.11/3.12 and Windows Python 3.12; LangGraph runs on Ubuntu Python 3.12. Zero failures/errors/unexpected skips are required.
 
-## Looking For
+See the [dated verification record](./docs/verification-2026-10-15.md) for exact runs and smoke coverage. A successful receipt-generation job can write a BLOCK or FAIL receipt; inspect content and current SHA, not just a green job.
 
-The most useful contribution is a messy agent output from your own workflow.
+## Not implemented or not established
 
-Examples:
+No hosted service, public package distribution, authenticated general event gateway, managed scheduler, production deployment, real money movement or correctness guarantee. No claim of population error rate, broad external adoption, zero external dependencies or end-to-end exactly-once.
 
-- An agent says "done" but provides no receipt.
-- An agent says "tests passed" but shows no command output.
-- An agent saves or promotes memory without approval.
-- An agent recommends publishing based only on another model's claim.
-- A handoff is incomplete, duplicated, or has no clear next owner.
+The protocol itself does not require a database or HTTP transport. The Python reference implementation uses SQLite and localhost HTTP experiments; those facts are compatible.
 
-Open an issue with the messy output, or add a new Dirty Run case.
+## Next work
 
-## Next Milestone
-
-Get 3 external users to submit 1 messy agent output each and translate each one into a SACP receipt.
-
-Success means:
-
-- 3 external cases added to the sample corpus.
-- 3 review notes explaining what SACP caught or failed to catch.
-- Any repeated failure mode converted into a Dirty Run case or AgentOps Doctor improvement.
-
-## Maintainer Rhythm
-
-- Every 2 weeks: update this file with current corpus counts and project status.
-- When a good messy output arrives: translate it into a receipt, add a review note, and link it from the issue.
-- When the spec changes: add a short changelog entry and keep v0.1 compatibility boundaries explicit.
-- When a suggestion is out of scope: close it unless a real dirty case proves the need.
+Finish controlled real fork end-to-end acceptance, strengthen isolation against arbitrary malicious Python tests, authenticate external collectors where used, and gather independently reviewed real-world false-completion and false-block cases. Keep schema/transport expansion behind concrete dirty cases and compatibility review. See [ROADMAP](./ROADMAP.md).

@@ -1,109 +1,30 @@
-# SACP Roadmap
+# SACP roadmap
 
-Chinese version: [ROADMAP.zh-CN.md](./ROADMAP.zh-CN.md)
+[中文](./ROADMAP.zh-CN.md) · [Current status](./STATUS.md) · Updated 2026-10-15
 
-## v0.1-alpha: Text-First Protocol Kit
+SACP/0.1 is the current exchange contract. Roadmap milestones describe capability maturity; they are not promises that every runtime feature needs a new protocol version.
 
-Status: current
+## Available: protocol and executable reference baseline
 
-Scope:
+The text-first spec, validator, dirty cases, Receipt Chain profile, local Doctor, examples and corpus are present. The Python runtime includes SQLite event storage, claim-specific evidence policy, separate authority/provider state, release/deployment/refund gates, bounded reconciliation, mock idempotency, GitHub payload and LangGraph adapters, and localhost HTTP experiments.
 
-- Envelope
-- Receipt
-- Status codes
-- Claim types
-- Support status
-- Dirty Run cases
-- AgentOps Doctor reference skill
-- Local validator
-- Example packets
-- Sample corpus receipts
-- Protocol evolution rules
+CI runs a cross-platform core matrix, explicit LangGraph integration, strict protocol validation and a deterministic harness with positive controls. Trusted default-branch code cross-checks GitHub execution facts and current PR identity before constructing a receipt. Merging remains a manual maintainer action. See [architecture](./docs/architecture.md) and [verification scope](./docs/verification-2026-10-15.md).
 
-Non-goals:
+## Next: trust and independent acceptance
 
-- no hosted platform
-- no database requirement
-- no HTTP endpoint
-- no automatic memory promotion
-- no model training pipeline
-- no correctness guarantee
+- Complete an actual controlled fork PR smoke run; synthetic fork API tests are not equivalent.
+- Strengthen test-process isolation and protect against adversarial in-process test code; source inventory and execution checks are necessary but insufficient.
+- Add authenticated host/provider collection and writer isolation for a concrete integration, rather than inventing a general identity platform.
+- Exercise process-crash windows and operational recovery beyond object reopen and SQLite concurrency tests.
+- Collect independently reviewed real failure and valid-success cases, including false blocks, with versioned evidence and privacy review.
+- If merge queue is enabled, define and verify formal merge-group receipt identity first.
 
-## Receipt Chain Profile
+## Candidate: schema and interoperability
 
-Status: documentation and examples first; validator enforcement later only if dirty cases prove the need.
+The [JSON Schema plan](./JSON_SCHEMA_PLAN.md) is still a plan. Stronger validation, MCP/A2A mappings and public transport bindings require a demonstrated dirty case, minimal contract, compatibility note and reference example. LangGraph and GitHub reference adapters already exist; they are not future-only work. OpenClaw/Longju docs-only notes are not runtime integrations.
 
-Receipt Chain is a profile for long-running, multi-module, and multi-agent work. It keeps the SACP core small by storing chain metadata in namespaced extensions rather than adding new required fields. See [SACP_RECEIPT_CHAIN.md](./SACP_RECEIPT_CHAIN.md).
+Receipt Chain remains an optional namespaced profile. [Protocol design references](./PROTOCOL_DESIGN_REFERENCES.md) guide evolution. Storage, UI, runtime and provider choice remain outside the required SACP core.
 
-## Protocol Design References
+## Stable standard: only after evidence
 
-Status: active design guidance.
-
-SACP borrows protocol discipline from HTTP, Git, OpenTelemetry, MIME, and RFC-style normative wording. This is now the default design route for protocol wording and boundary decisions. See [PROTOCOL_DESIGN_REFERENCES.md](./PROTOCOL_DESIGN_REFERENCES.md).
-
-## v0.2: Schemas And Stronger Validation
-
-Status: docs-only plan first; validator enforcement later only if dirty cases prove the need.
-
-Plan: [JSON_SCHEMA_PLAN.md](./JSON_SCHEMA_PLAN.md), [Chinese version](./JSON_SCHEMA_PLAN.zh-CN.md)
-
-Candidate additions:
-
-- JSON Schema for envelope and receipt
-- stricter CLI validation
-- structured receipt completeness report
-- improved Dirty Run runner
-- public-safe sample corpus expansion
-
-## v0.3: Runtime Adapters
-
-Candidate adapters:
-
-- Docs-only adapter note template
-- OpenClaw / Longju docs-only adapter note
-- OpenClaw / Longju state ledger
-- LangGraph checkpoint mapping
-- MCP tool-call evidence mapping
-- A2A task-message mapping
-- local Markdown vault adapter
-
-## v0.4: Transport Bindings
-
-Possible HTTP binding:
-
-```http
-POST /sacp/handoffs/{handoff_id}/claim
-POST /sacp/handoffs/{handoff_id}/attempts/{attempt_id}/complete
-GET  /sacp/receipts/{receipt_id}
-```
-
-The transport must not change the protocol meaning.
-
-## v0.5: Conformance Suite
-
-Candidate additions:
-
-- public Dirty Run benchmark
-- conformance profiles
-- receipt completeness badge
-- compatibility reports for popular agent frameworks
-
-## v1.0: Stable Minimal Standard
-
-Freeze only after real adoption:
-
-- required envelope fields
-- required receipt fields
-- method set
-- claim taxonomy
-- support status
-- core status codes
-- extension compatibility rules
-
-Do not freeze:
-
-- runtime
-- UI
-- storage
-- model provider
-- training method
+Freeze a stable minimal contract only after real adoption and compatibility evidence. Keep required fields small; vendor details belong under `extensions`. Do not claim a correctness guarantee, automatically promote memory, or expand the core to absorb scheduling, payments, tracing or deployment control.
