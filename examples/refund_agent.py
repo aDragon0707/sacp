@@ -53,7 +53,7 @@ def main() -> None:
         print(f"1) accepted only: status={before.external_status}, same_refund_id={refund_id == duplicate_id}")
 
         provider.webhook(action_id, "succeeded", refund_id, **expected, observed_at=BASE + timedelta(minutes=1))
-        gate = RefundGate(store, Verifier(store)).can_finalize(action_id, expected)
+        gate = RefundGate(store, Verifier(store)).can_finalize(action_id, expected, now=BASE + timedelta(minutes=1))
         print(f"2) succeeded webhook: allowed={gate.allowed}, reason={gate.reason}")
     finally:
         store.close()

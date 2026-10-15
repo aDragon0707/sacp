@@ -6,6 +6,7 @@ import hashlib
 import json
 import sqlite3
 import uuid
+from contextlib import contextmanager
 from dataclasses import asdict, is_dataclass
 from datetime import datetime
 from typing import Any
@@ -53,9 +54,22 @@ class EventStore:
             """
         )
         self._connection.commit()
+        self._connection.execute("CREATE TABLE IF NOT EXISTS mock_refund_requests (provider TEXT NOT NULL, request_key TEXT NOT NULL, request_json TEXT NOT NULL, receipt_id TEXT NOT NULL, PRIMARY KEY(provider, request_key))")
+        self._connection.commit()
 
     def close(self) -> None:
         self._connection.close()
+
+    @contextmanager
+    def transaction(self):
+        """Serialize a read/decision/append unit across SQLite connections."""
+        self._connection.execute("BEGIN IMMEDIATE")
+        try:
+            yield
+            self._connection.commit()
+        except Exception:
+            self._connection.rollback()
+            raise
 
     def _append(
         self,
@@ -69,6 +83,7 @@ class EventStore:
         payload_json = _payload(value)
         digest = hashlib.sha256(payload_json.encode("utf-8")).hexdigest()
         event_id = str(uuid.uuid4())
+        managed_transaction = self._connection.in_transaction
         try:
             self._connection.execute(
                 "INSERT INTO events (event_id, event_type, action_id, actor, created_at, payload_json, payload_digest, dedupe_key) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
@@ -83,9 +98,12 @@ class EventStore:
                     dedupe_key,
                 ),
             )
-            self._connection.commit()
+            if not managed_transaction:
+                self._connection.commit()
             return event_id
         except sqlite3.IntegrityError:
+            if not managed_transaction:
+                self._connection.rollback()
             if dedupe_key is None:
                 raise
             row = self._connection.execute(
@@ -130,7 +148,7 @@ class EventStore:
             f"authority:{decision.owner}",
             decision,
             decided_at,
-            f"{decision.input_digest}:{decision.action_scope}:{decision.decision}",
+            hashlib.sha256(_payload(decision).encode("utf-8")).hexdigest(),
         )
 
     def record_reconciliation(self, event: ReconciliationEvent) -> str:
@@ -140,8 +158,25 @@ class EventStore:
             f"reconciler:{event.owner}",
             event,
             event.checked_at,
-            f"{event.result}:{event.checked_at.isoformat()}",
+            f"{event.claim_ref}:{event.attempt}:{event.result}" if event.claim_ref else f"{event.result}:{event.checked_at.isoformat()}",
         )
+
+    def record_mock_refund_request(self, observation: ProviderObservation, key: str) -> str:
+        """Atomically reserve a mock identity and append its accepted event.
+
+        Scoped to this SQLite database and provider; no external payment executes.
+        Reusing a key for a different action or request raises ValueError.
+        """
+        request = _payload({"action_id": observation.action_id, "metadata": observation.metadata})
+        with self.transaction():
+            row = self._connection.execute("SELECT request_json, receipt_id FROM mock_refund_requests WHERE provider=? AND request_key=?", (observation.provider, key)).fetchone()
+            if row:
+                if row["request_json"] != request:
+                    raise ValueError("idempotency key conflicts with an existing refund request")
+                return str(row["receipt_id"])
+            self._connection.execute("INSERT INTO mock_refund_requests VALUES (?, ?, ?, ?)", (observation.provider, key, request, observation.receipt_id))
+            self.record_provider_observation(observation)
+            return observation.receipt_id
 
     def events(self, action_id: str | None = None) -> list[sqlite3.Row]:
         if action_id is None:

@@ -17,7 +17,8 @@ def claim_evidence_satisfied(claim: dict[str, Any], events_by_id: dict[str, dict
             _has_host_event(claim, events_by_id, _valid_ci_check, claim.get("metadata", {}).get("commit"))
             and _has_host_event(claim, events_by_id, _valid_artifact, claim.get("metadata", {}).get("commit"))
         )
-    return True
+    # Lifecycle intentions are projected from provider facts, not host completion.
+    return claim_type in {"notification_sent", "publish_action", "ask_counterparty", "refund_requested", "deployed"}
 
 
 def _has_host_event(
@@ -30,6 +31,8 @@ def _has_host_event(
         event = events_by_id.get(reference)
         if not event or event["event_type"] != "host_observation":
             continue
+        if any(event["payload"].get(field) != claim.get(field) for field in ("thread_id", "run_id", "checkpoint_id")):
+            continue
         if callable(predicate) and predicate(event["payload"], commit):
             return True
     return False
@@ -38,7 +41,7 @@ def _has_host_event(
 def _valid_ci_check(payload: dict[str, Any], commit: str | None) -> bool:
     details = payload.get("payload", {})
     if payload.get("kind") == "test_run":
-        return details.get("exit_code") == 0 and bool(details.get("output_digest"))
+        return details.get("exit_code") == 0 and bool(details.get("output_digest")) and (commit is None or details.get("commit", details.get("head_sha")) == commit)
     return (
         payload.get("kind") == "ci_check"
         and details.get("conclusion") == "success"

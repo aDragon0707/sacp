@@ -79,7 +79,7 @@ class LangGraphReleaseExperimentTests(unittest.TestCase):
         finally:
             experiment.close()
 
-    def test_delayed_provider_event_stops_langgraph_recovery(self) -> None:
+    def test_delayed_acceptance_keeps_langgraph_terminal_recovery(self) -> None:
         experiment = LangGraphReleaseExperiment(now=datetime(2026, 9, 5, tzinfo=timezone.utc))
         try:
             experiment.invoke(approved=True, provider_event="none")
@@ -100,10 +100,10 @@ class LangGraphReleaseExperimentTests(unittest.TestCase):
                 "delayed-langgraph-provider-receipt",
                 delayed_event_at,
             )
-            self.assertEqual(len(reconciler.reconcile(second_check)), 0)
+            self.assertEqual(len(reconciler.reconcile(second_check)), 1)
             receipt = experiment.receipt_at(second_check)
             self.assertEqual(receipt.external_status, "transport_accepted")
-            self.assertEqual(receipt.recovery_route, "none")
+            self.assertEqual(receipt.recovery_route, "compensation")
             self.assertFalse(receipt.retry_allowed)
         finally:
             experiment.close()

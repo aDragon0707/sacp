@@ -37,7 +37,7 @@ class StateMachinePropertyTests(unittest.TestCase):
                     provider.emit(
                         f"property-{index}",
                         event,
-                        f"provider-{index}-{offset}",
+                        f"provider-{index}",
                         BASE + timedelta(seconds=offset),
                     )
                 receipt = verifier.project_receipt(f"property-{index}", BASE + timedelta(minutes=1))
